@@ -1,0 +1,73 @@
+bottomLeft:
+  position: [-50.0, -50.0]
+
+topRight:
+  position: [50.0, 50.0]
+
+Obstacle1:
+  position: [-26, 17]
+  radius: 2.0
+
+Obstacle2:
+  position: [-11, 9]
+  radius: 2.0
+
+Obstacle3:
+  position: [-14, -1]
+  radius: 2.0
+
+Obstacle4:
+  position: [-4,-6]
+  radius: 2.0
+
+Obstacle5:
+  position: [-21,-10]
+  radius: 2.0
+
+Obstacle6:
+  position: [6,4]
+  radius: 2.0
+
+Obstacle7:
+  position: [1,17]
+  radius: 2.0
+
+Obstacle8:
+  position: [14,-1]
+  radius: 2.0
+
+Obstacle9:
+  position: [25,0]
+  radius: 2.0
+
+Obstacle10:
+  position: [1,-20]
+  radius: 2.0
+
+Obstacle11:
+  position: [10,20]
+  radius: 2.0
+
+Obstacle12:
+  position: [-12,-20]
+  radius: 2.0
+
+Obstacle13:
+  position: [-11,22]
+  radius: 2.0
+
+Obstacle14:
+  position: [18,-13]
+  radius: 2.0
+
+Obstacle15:
+  position: [15,15]
+  radius: 2.0
+
+Obstacle16:
+  position: [-25,5]
+  radius: 2.0
+
+Obstacle17:
+  position: [8,-10]
+  radius: 2.0

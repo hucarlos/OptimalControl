@@ -1,0 +1,35 @@
+xStart:
+ values: [-21, 23, 15]
+
+xGoal:
+  values: [16, -12, 45]
+
+nominalControl:
+  values: [0.0, 0.0] # Nominal controls, v and omega
+
+paramsLQR:
+  values: [100, 1.0e-4, 100] # Horizont, epsilon, maximun iterations
+
+quadraticFactors:
+  values: [50, 1] # Q factor, R factor
+
+obstaclesFactors:
+  values: [1.0, 1.0, 1.675] # Obstacle factor, scale, robot radius
+
+iQRLQR:
+  epsilon: [0.01] # epsilon
+  radius: [1, 1, 1, 1, 1]
+
+iQRSELQR:
+  epsilon: [5.0e-3] # epsilon
+  radius: [1, 1, 1, 1, 1]
+
+mapFile:
+  values: [map1.yaml]
+
+
+mapFile:
+  values: [map1.yaml]
+
+     
+  

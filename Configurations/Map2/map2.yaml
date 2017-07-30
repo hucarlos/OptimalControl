@@ -1,0 +1,205 @@
+
+bottomLeft:
+  position: [-50.0, -50.0]
+
+topRight:
+  position: [50.0, 50.0]
+
+Obstacle1:
+  position: [0.0, -24]
+  radius: 2.0
+
+Obstacle2:
+  position: [-24, 24]
+  radius: 2.0
+
+Obstacle3:
+  position: [0, 0]
+  radius: 2.0
+
+Obstacle4:
+  position: [24, 24]
+  radius: 2.0
+
+Obstacle5:
+  position: [-24, -24]
+  radius: 2.0
+
+Obstacle6:
+  position: [0, 24]
+  radius: 2.0
+
+Obstacle7:
+  position: [24, -24]
+  radius: 2.0
+
+Obstacle8:
+  position: [-24, 0]
+  radius: 2.0
+
+Obstacle9:
+  position: [24, 0]
+  radius: 2.0
+
+Obstacle10:
+  position: [-8, 24]
+  radius: 2.0
+
+Obstacle11:
+  position: [8, 24]
+  radius: 2.0
+
+
+Obstacle12:
+  position: [0, 8]
+  radius: 2.0
+
+Obstacle13:
+  position: [8, 8]
+  radius: 2.0
+
+Obstacle14:
+  position: [-24, 8]
+  radius: 2.0
+
+Obstacle15:
+  position: [24, 8]
+  radius: 2.0
+
+Obstacle16:
+  position: [-8, 0]
+  radius: 2.0
+
+Obstacle17:
+  position: [8, 0]
+  radius: 2.0
+
+
+Obstacle19:
+  position: [-24, -8]
+  radius: 2.0
+
+Obstacle20:
+  position: [-8, -8]
+  radius: 2.0
+
+Obstacle21:
+  position: [8, -8]
+  radius: 2.0
+
+Obstacle22:
+  position: [0, -8]
+  radius: 2.0
+
+Obstacle23:
+  position: [24, -8]
+  radius: 2.0
+
+Obstacle24:
+  position: [-8, -24]
+  radius: 2.0
+
+Obstacle25:
+  position: [8, -24]
+  radius: 2.0
+
+Obstacle26:
+  position: [-8, 8]
+  radius: 2.0
+
+Obstacle27:
+  position: [16, 16]
+  radius: 2.0
+
+Obstacle28:
+  position: [16, 8]
+  radius: 2.0
+
+Obstacle29:
+  position: [16, 0]
+  radius: 2.0
+
+Obstacle30:
+  position: [16, -8]
+  radius: 2.0
+
+Obstacle31:
+  position: [16, 24]
+  radius: 2.0
+
+Obstacle32:
+  position: [16, -24]
+  radius: 2.0
+
+Obstacle33:
+  position: [-16, 16]
+  radius: 2.0
+
+Obstacle34:
+  position: [-16, 8]
+  radius: 2.0
+
+Obstacle35:
+  position: [-16, 0]
+  radius: 2.0
+
+Obstacle36:
+  position: [-16, -8]
+  radius: 2.0
+
+Obstacle37:
+  position: [-16, 24]
+  radius: 2.0
+
+Obstacle38:
+  position: [-16, -24]
+  radius: 2.0
+
+Obstacle39:
+  position: [-24, 16]
+  radius: 2.0
+
+Obstacle41:
+  position: [-8, 16]
+  radius: 2.0
+
+Obstacle42:
+  position: [0, 16]
+  radius: 2.0
+
+Obstacle43:
+  position: [8, 16]
+  radius: 2.0
+
+
+Obstacle45:
+  position: [24, 16]
+  radius: 2.0
+
+Obstacle46:
+  position: [-8, -16]
+  radius: 2.0
+
+Obstacle47:
+  position: [0, -16]
+  radius: 2.0
+
+Obstacle48:
+  position: [8, -16]
+  radius: 2.0
+
+Obstacle49:
+  position: [16, -16]
+  radius: 2.0
+
+Obstacle50:
+  position: [24, -16]
+  radius: 2.0
+
+Obstacle51:
+  position: [-16, -16]
+  radius: 2.0
+
+Obstacle52:
+  position: [-24, -16]
+  radius: 2.0
