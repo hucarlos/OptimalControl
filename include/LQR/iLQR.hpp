@@ -57,8 +57,9 @@ class iLQR : public BasicLQR<xDim, uDim>
 
             const unsigned int ell = this->getHorizont();
 
-            std::fill(this->L.begin(), this->L.end(), zeros<mat>(uDim, xDim));
-            this->l = nominalU;
+            this->clearAll();
+
+            this->setl(nominalU);
 
             std::vector< State >   xHat(ell + 1, zeros<vec>(xDim));
             std::vector< Control > uHat(ell, zeros<vec>(uDim));
@@ -98,7 +99,7 @@ class iLQR : public BasicLQR<xDim, uDim>
                 s         = zeros<vec>(xDim);
                 scalar_s  = 0.0;
 
-                this->finalCost->quadratize(xHat[ell], S, s, scalar_s);
+                this->finalCost->quadratize(xHat.at(ell), S, s, scalar_s);
 
                 // Matrixs for quadratization
                 ControlStateMatrix C  = zeros<mat>(uDim, xDim);
@@ -149,10 +150,10 @@ class iLQR : public BasicLQR<xDim, uDim>
                                        Control&e,
                                        int t)
         {
-            const StateMatrix               A = this->system->jacobianState(xHat[t], uHat[t]);
-            const StateControlMatrix        B = this->system->jacobianControl(xHat[t], uHat[t]);
+            const StateMatrix               A = this->system->jacobianState(xHat.at(t), uHat.at(t));
+            const StateControlMatrix        B = this->system->jacobianControl(xHat.at(t), uHat.at(t));
 
-            const State c = xHat[t+1] - A*xHat[t] - B*uHat[t];
+            const State c = xHat.at(t+1) - A*xHat.at(t) - B*uHat.at(t);
 
             ControlStateMatrix P                = zeros<mat>(uDim, xDim);
             StateMatrix Q                       = zeros<mat>(xDim, xDim);
@@ -160,7 +161,7 @@ class iLQR : public BasicLQR<xDim, uDim>
             State q                             = zeros<vec>(xDim);
             Control r                           = zeros<vec>(uDim);
 
-            this->systemCost->quadratize(xHat[t], uHat[t], Q, R, P, q, r);
+            this->systemCost->quadratize(xHat.at(t), uHat.at(t), Q, R, P, q, r);
 
             //Quadratic terms
             C   = B.t() * S *A + P;
@@ -190,12 +191,12 @@ class iLQR : public BasicLQR<xDim, uDim>
                                const Control&e,
                                const int t)
         {
-            this->L[t] = -solve(E,C);
-            this->l[t] = -solve(E,e);
+            this->L.at(t) = -solve(E,C);
+            this->l.at(t) = -solve(E,e);
 
-            S = D + C.t() * this->L[t];
+            S = D + C.t() * this->L.at(t);
 
-            s = d + C.t() * this->l[t];
+            s = d + C.t() * this->l.at(t);
 
             scalar_s = 0.0;
         }
@@ -207,7 +208,7 @@ class iLQR : public BasicLQR<xDim, uDim>
                                   double&progress,
                                   std::vector<State>&xHat,
                                   std::vector<Control>&uHat,
-                                  const double epsilon=1.0e-4)
+                                  const double delta=1.0e-4)
         {
 
             const unsigned int ell = this->getHorizont();
@@ -225,30 +226,31 @@ class iLQR : public BasicLQR<xDim, uDim>
                 newCost = 0.0;
 
                 // init trajectory
-                xHatNew[0] = initState;
+                xHatNew.at(0) = initState;
 
                 for (size_t t = 0; t < ell; ++t)
                 {
 
-                    uHatNew[t]      = (1.0 - alpha)*uHat[t] + this->L[t] * (xHatNew[t] - (1.0 - alpha)*xHat[t]) + alpha * this->l[t];
-                    xHatNew[t+1]    = this->system->move(xHatNew[t], uHatNew[t]);
+                    uHatNew.at(t)      = (1.0 - alpha)*uHat.at(t) + this->L.at(t) * (xHatNew.at(t)
+                                                                                  - (1.0 - alpha)*xHat.at(t)) + alpha * this->l.at(t);
+                    xHatNew.at(t+1)    = this->system->move(xHatNew.at(t), uHatNew.at(t));
 
                     if(t==0)
                     {
-                        newCost += this->initCost->evaluate(xHatNew[t]);
+                        newCost += this->initCost->evaluate(xHatNew.at(t));
                     }
 
-                    newCost += this->systemCost->evaluate(xHatNew[t], uHatNew[t]);
+                    newCost += this->systemCost->evaluate(xHatNew.at(t), uHatNew.at(t));
                 }
 
-                newCost += this->finalCost->evaluate(xHatNew[ell]);
+                newCost += this->finalCost->evaluate(xHatNew.at(ell));
 
                 alpha *= 0.5;
 
                 progress = (oldCost - newCost) / newCost;
 
             }
-            while (!(newCost < oldCost || std::abs(progress) < epsilon));
+            while (!(newCost < oldCost || std::abs(progress) < delta));
 
             xHat    = xHatNew;
             uHat    = uHatNew;

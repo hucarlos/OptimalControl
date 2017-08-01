@@ -17,20 +17,16 @@ obstaclesFactors:
   values: [1.0, 1.0, 1.675] # Obstacle factor, scale, robot radius
 
 iQRLQR:
-  epsilon: [0.01] # epsilon
-  radius: [1, 1, 1, 1, 1]
-
-iQRSELQR:
   epsilon: [1.0e-3] # epsilon
   radius: [1, 1, 1, 1, 1]
 
+iQRSELQR:
+  epsilon: [1.0e-2] # epsilon
+  radius: [1, 1, 1, 1, 1]
+
 mapFile:
   values: [map1.yaml]
 
-
-
-mapFile:
-  values: [map1.yaml]
 
      
   

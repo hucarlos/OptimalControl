@@ -68,112 +68,128 @@ class SELQR : public BasicLQR<xDim, uDim>
             double newCost  = 0.0;
             double oldCost  = -std::log(0.0);
 
+
             for (unsigned int iter = 0; iter < maxIter; ++iter)
             {
 
-                this->setIteratios(iter);
-
-                SBar.at(0).zeros();
-                sBar.at(0).zeros();
-                scalar_sBar.at(0)   = 0.0;
-
-                // ================================ FORWARD PASS ========================================
-                for (unsigned int t = 0; t < ell; ++ t)
+                try
                 {
-
-                    this->setTime(t);
-
-                    // Get the nominal point
-                    const Control uHat       = this->L.at(t)*xHat + this->l.at(t);
-
-                    // ====================== Quadratize cost-to-come ==================================
-
-                    StateMatrix DBar    = zeros<mat>(xDim, xDim);
-                    ControlMatrix EBar  = zeros<mat>(uDim, uDim);
-
-                    ControlStateMatrix CBar = zeros<mat>(uDim, xDim);
-
-                    State dBar      = zeros<vec>(xDim);
-                    Control eBar    = zeros<vec>(uDim);
-
-                    double scalar_f = 0.0;
-
-                    quadratizeCost2Come(xHat, uHat, t, DBar, EBar, CBar, dBar, eBar, scalar_f);
-
-                    getForwardPolicy(DBar, EBar, CBar, dBar, eBar, scalar_f, t);
-
-                    // Update nominal state t+1
-                    const int update = t+1;
-                    estimateNominalState(update, xHat);
-
-                }
-
-                // ================================ BACKWARD PASS ========================================
-
-                S.at(ell).zeros();
-                s.at(ell).zeros();
-                scalar_s.at(ell)  = 0.0;
-
-                this->finalCost->quadratize(xHat, S.at(ell), s.at(ell), scalar_s.at(ell));
-
-                // Update nominal state in ell
-                estimateNominalState(ell, xHat);
-
-                for (int t = ell - 1; t != -1; --t)
-                {
-                    this->setTime(t);
-
-                    // Get the nominal point
-                    const Control uHat       = this->L.at(t)*xHat + this->l.at(t);
-
-                    // ====================== Quadratize cost-to-come =====================
-
-                    StateMatrix D   = zeros<mat>(xDim,xDim);
-                    ControlMatrix E = zeros<mat>(uDim, uDim);
-
-                    ControlStateMatrix C = zeros<mat>(uDim, xDim);
-
-                    State d     = zeros<vec>(xDim);
-                    Control e   = zeros<vec>(uDim);
-
-                    double scalar_b = 0.0;
-
-                    quadratizeCost2Go(xHat, uHat, t, D, E, C, d, e, scalar_b);
-
-                    // ====================== Get policy ==================================
-
-                    getBackwardPolicy(D, E, C, d, e, scalar_b, t);
-
-                    // Update nominal state in t
-                    estimateNominalState(t, xHat);
-
-                }
-
-                // compute cost
-                newCost = this->estimatePath(xHat);
-
-                this->progress = ((oldCost - newCost) / newCost);
-
-                this->setAccum(newCost);
-
-                this->printProgress();
-
-
-                // Stop condition
-                if (std::abs(this->getProgress()) <= delta)
-                {
-                    ++iter;
                     this->setIteratios(iter);
-                    return newCost;
+
+                    SBar.at(0).zeros();
+                    sBar.at(0).zeros();
+                    scalar_sBar.at(0)   = 0.0;
+
+                    // ================================ FORWARD PASS ========================================
+                    for (unsigned int t = 0; t < ell; ++ t)
+                    {
+
+                        this->setTime(t);
+
+                        // Get the nominal point
+                        const Control uHat       = this->L.at(t)*xHat + this->l.at(t);
+
+                        // ====================== Quadratize cost-to-come ==================================
+
+                        StateMatrix DBar    = zeros<mat>(xDim, xDim);
+                        ControlMatrix EBar  = zeros<mat>(uDim, uDim);
+
+                        ControlStateMatrix CBar = zeros<mat>(uDim, xDim);
+
+                        State dBar      = zeros<vec>(xDim);
+                        Control eBar    = zeros<vec>(uDim);
+
+                        double scalar_f = 0.0;
+
+                        quadratizeCost2Come(xHat, uHat, t, DBar, EBar, CBar, dBar, eBar, scalar_f);
+
+                        getForwardPolicy(DBar, EBar, CBar, dBar, eBar, scalar_f, t);
+
+                        // Update nominal state t+1
+                        const int update = t+1;
+                        estimateNominalState(update, xHat);
+
+                    }
+
+                    // ================================ BACKWARD PASS ========================================
+
+                    S.at(ell).zeros();
+                    s.at(ell).zeros();
+                    scalar_s.at(ell)  = 0.0;
+
+                    this->finalCost->quadratize(xHat, S.at(ell), s.at(ell), scalar_s.at(ell));
+
+                    // Update nominal state in ell
+                    estimateNominalState(ell, xHat);
+
+                    for (int t = ell - 1; t != -1; --t)
+                    {
+                        this->setTime(t);
+
+                        // Get the nominal point
+                        const Control uHat       = this->L.at(t)*xHat + this->l.at(t);
+
+                        // ====================== Quadratize cost-to-come =====================
+
+                        StateMatrix D   = zeros<mat>(xDim,xDim);
+                        ControlMatrix E = zeros<mat>(uDim, uDim);
+
+                        ControlStateMatrix C = zeros<mat>(uDim, xDim);
+
+                        State d     = zeros<vec>(xDim);
+                        Control e   = zeros<vec>(uDim);
+
+                        double scalar_b = 0.0;
+
+                        quadratizeCost2Go(xHat, uHat, t, D, E, C, d, e, scalar_b);
+
+                        // ====================== Get policy ==================================
+
+                        getBackwardPolicy(D, E, C, d, e, scalar_b, t);
+
+                        // Update nominal state in t
+                        estimateNominalState(t, xHat);
+
+                    }
+
+                    // compute cost
+                    newCost = this->estimatePath(xHat);
+
+                    this->progress = ((oldCost - newCost) / newCost);
+
+                    this->setAccum(newCost);
+
+                    if(this->vis)
+                    {
+                        this->printProgress();
+                    }
+
+
+                    // Stop condition
+                    if (std::abs(this->getProgress()) <= delta)
+                    {
+                        ++iter;
+                        this->setIteratios(iter);
+                        return newCost;
+                    }
+
+                    oldCost = newCost;
+
+                    // Set the parameters to the new values for every iteration
+                    setParameters();
+
+                    // If something goes wrong try to start again
+                    if(std::isnan(this->getAccum()) || (!isfinite(this->getAccum())) )
+                    {
+                        newCost  = 0.0;
+                        oldCost  = -std::log(0.0);
+
+                        xHat       = startState;
+
+                        setInitialConditions(nominalU);
+                    }
                 }
-
-                oldCost = newCost;
-
-                // Set the parameters to the new values for every iteration
-                //setParameters();
-
-                // If something goes wrong try to start again
-                if(std::isnan(this->getAccum()) || (!isfinite(this->getAccum())) )
+                catch(std::logic_error&e)
                 {
                     newCost  = 0.0;
                     oldCost  = -std::log(0.0);
@@ -181,6 +197,7 @@ class SELQR : public BasicLQR<xDim, uDim>
                     xHat       = startState;
 
                     setInitialConditions(nominalU);
+                    continue;
                 }
 
             }
@@ -431,7 +448,7 @@ class SELQR : public BasicLQR<xDim, uDim>
         {
 
             this->L.at(t) = -solve(E, C);     //-(E.colPivHouseholderQr().solve(C));
-            this->l.at(t) = -solve(E,e);      //-(E.colPivHouseholderQr().solve(e));
+            this->l.at(t) = -solve(E, e);      //-(E.colPivHouseholderQr().solve(e));
 
             S.at(t) = D + C.t() * this->L.at(t);
             s.at(t) = d + C.t() * this->l.at(t);
@@ -477,9 +494,13 @@ class SELQR : public BasicLQR<xDim, uDim>
             std::fill(sBar.begin(),        sBar.end(),        zeros<vec>(xDim));
             std::fill(scalar_sBar.begin(), scalar_sBar.end(), 0.0);
 
-            std::fill(this->L.begin(), this->L.end(), zeros<mat>(uDim, xDim));
+            this->clearAll();
+            this->setl(nominalU);
 
-            this->l = nominalU;
+        }
+
+        virtual void setParameters()
+        {
 
         }
 

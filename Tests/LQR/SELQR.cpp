@@ -3,8 +3,10 @@
 
 #include <Cost/SystemCost.hpp>
 #include <System/DDR.hpp>
-#include <LQR/SELQR.hpp>
-#include <LQR/iLQR.hpp>
+#include <LQR/iQRLQR.hpp>
+#include <LQR/iQRSELQR.hpp>
+
+#include<Utils/SystemParameters.hpp>
 
 using namespace std;
 
@@ -29,88 +31,138 @@ typedef arma::mat::fixed<UDIM, XDIM>ControlStateMatrix;
 
 int main(int argc, char *argv[])
 {
-    TimeVar t1;
+    TimeVar tSELQR, tQRSELQR;
 
-    const unsigned int ell = 100;
+    int winner = 0;
 
     DDR robot(1.0/6.0);
 
-    if(argc<2)
+    // Create distributions for sampling
+    std::default_random_engine generator;
+
+    ofstream out("Cords.txt", std::ofstream::out);
+
+    unsigned int countExperiments = 100;
+    unsigned int experiment = 0;
+    do
     {
-        std::cerr<<"Wrong parameters number"<<endl;
-        return -1;
+
+        std::string file;
+        try
+        {
+
+            const unsigned int ell      = 100;
+            const double delta          = 1.0e-4;
+            const unsigned int max_iter = 100;
+
+            std::uniform_real_distribution<double> init_x(-20, 20);
+            std::uniform_real_distribution<double> init_y(-24, -40);
+            std::uniform_real_distribution<double> init_a(0, M_PI_2);
+
+            std::uniform_real_distribution<double> final_x(-20, 20);
+            std::uniform_real_distribution<double> final_y(25, 40);
+            std::uniform_real_distribution<double> final_a(0, M_PI_2);
+
+            State xStart          = zeros<vec>(XDIM);
+            xStart(0) = init_x(generator);
+            xStart(1) = init_y(generator);
+            xStart(2) = init_a(generator);
+
+            State xGoal           = zeros<vec>(XDIM);
+            xGoal(0) = final_x(generator);
+            xGoal(1) = final_y(generator);
+            xGoal(2) = final_a(generator);
+
+            const ControlMat R          = 1.0    * eye<mat>(UDIM, UDIM);
+            const StateMat Q            = 50.0   * eye<mat>(XDIM, XDIM);
+            const Control uNominal      = zeros<vec>(UDIM);
+
+
+            const double obstacleFactor = 1.0;
+            const double scaleFactor    = 1.0;
+            const double robotRadius    = 1.675;
+
+            const string mapfile("map1.yaml");
+
+            //============================ Set the obstacles =========================
+            arma::vec2 bottomLeft, topRight;
+            std::vector<Obstacle<ODIM> >obstacles;
+            loadMapYAML(mapfile, obstacles, bottomLeft, topRight);
+
+            ObstaclesCost<XDIM, ODIM>obstacles_cost(robotRadius, obstacles);
+
+            obstacles_cost.setTopRight(topRight);
+            obstacles_cost.setBottomLeft(bottomLeft);
+
+            obstacles_cost.setScaleFactor(scaleFactor);
+            obstacles_cost.setObstacleFactor(obstacleFactor);
+
+            // =========================== Init all the cost functions ==========================
+
+            std::vector<Control>lNominal(ell);
+            std::fill(lNominal.begin(), lNominal.end(), zeros<vec>(UDIM));
+
+            QuadraticCost<XDIM>init_cost(xStart, Q);
+            QuadraticCost<XDIM>final_cost(xGoal, Q);
+            QuadraticCost<UDIM>control_cost(uNominal, R);
+
+            SystemCost<XDIM, UDIM>system_cost(&control_cost, &obstacles_cost);
+
+            // Same radius and epsilon for all examples
+            const double epsilon = 1.0e-3;
+            vec::fixed<XDIM + UDIM>radius = ones<vec>(XDIM + UDIM);
+            radius(0) = 1;
+            radius(1) = 1;
+            radius(2) = 0.2;
+            radius(3) = 1;
+            radius(4) = 1;
+
+            // ========================================= SELQR ALGORITHMS =============================
+
+            SELQR<XDIM, UDIM>selqr(ell, &robot, &init_cost, &system_cost, &final_cost, false);
+            tSELQR=timeNow();
+            selqr.estimate(xStart, max_iter, delta, lNominal);
+            double timeSELQR = duration(timeNow() - tSELQR);
+
+            // ========================================= iQRSELQR ALGORITHMS =============================
+
+            iQRLQR<XDIM, UDIM>iqrlqr(ell, &robot, &init_cost, &system_cost, &final_cost, false);
+            iqrlqr.setInitRadius(radius);
+            iqrlqr.setEpsilon(epsilon);
+
+            tQRSELQR=timeNow();
+            iqrlqr.estimate(xStart, max_iter, delta, lNominal);
+            double timeQRSELQR = duration(timeNow() - tQRSELQR);
+
+            if(selqr.getAccum() > iqrlqr.getAccum())
+            {
+                winner ++;
+            }
+            else
+            {
+                out<<xStart(0)<<' '<<xStart(1)<<' '<<(180/M_PI)*xStart(2)<<' '<<xGoal(0)<<' '<<xGoal(1)<<' '<<(180/M_PI)*xGoal(2)<<endl;
+            }
+
+
+            std::cout << experiment <<'\t'
+                                    <<"Time (ms): "   << timeSELQR            <<' '   << timeQRSELQR<<'\t'
+                                    <<"Cost: "        << selqr.getAccum()     <<' '   << iqrlqr.getAccum()<<'\t'
+                                    <<"Iters: "       << selqr.iterations()   <<' '   << iqrlqr.iterations()<<endl;
+
+            experiment++;
+
+        }
+        catch(std::logic_error&e)
+        {
+            std::cout<<"Example: "<<file<<" not solved: "<<e.what()<<endl;
+                       continue;
+        }
     }
+    while(experiment < countExperiments);
 
-    std::string mapfile(argv[1]);
-    const double obstacleFactor = 2.0;
-    const double scaleFactor    = 1.0;
-    const double robotRadius    = 3.35/2.0;
+    std::cout<<"Win %: "<<(double(winner)/countExperiments)*100<<endl;
 
-    arma::vec2 bottomLeft, topRight;
-    std::vector<Obstacle<ODIM> >obstacles;
-
-
-    loadMapYAML(mapfile, obstacles, bottomLeft, topRight);
-
-    //============================ Set the obstacles =========================
-    ObstaclesCost<XDIM, ODIM>obstacles_cost(robotRadius, obstacles);
-
-    obstacles_cost.setTopRight(topRight);
-    obstacles_cost.setBottomLeft(bottomLeft);
-
-    obstacles_cost.setScaleFactor(scaleFactor);
-    obstacles_cost.setObstacleFactor(obstacleFactor);
-
-    // =========================== Init all the cost functions ==========================
-
-    const ControlMat R = 1.0  * eye<mat>(UDIM, UDIM);
-    const StateMat   Q = 50.0 * eye<mat>(XDIM, XDIM);
-
-    State xStart;
-    xStart(0) = 13;
-    xStart(1) = 23.0;
-    xStart(2) = 15*(M_PI/180.0);
-
-    State xGoal;
-    xGoal(0) = -14;
-    xGoal(1) = -7;
-    xGoal(2) = 45*(M_PI/180.0);;
-
-    const Control uNominal = zeros<vec>(UDIM);
-
-    std::vector<Control>lNominal(ell);
-    std::fill(lNominal.begin(), lNominal.end(), zeros<vec>(UDIM));
-
-    QuadraticCost<XDIM>init_cost(xStart, Q);
-    QuadraticCost<XDIM>final_cost(xGoal, Q);
-    QuadraticCost<UDIM>control_cost(uNominal, R);
-
-    SystemCost<XDIM, UDIM>system_cost(&control_cost, &obstacles_cost);
-
-    iLQR<XDIM, UDIM>ilqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
-
-    SELQR<XDIM, UDIM>selqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
-
-    t1=timeNow();
-    ilqr.estimate(xStart, 100, 1.0e-3, lNominal);
-    std::cout<<"iLQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl;
-
-    t1=timeNow();
-    selqr.estimate(xStart, 100, 1.0e-3, lNominal);
-    std::cout<<"SELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl;
-
-    std::vector<State>systemPath(ell +1);
-    std::vector<Control>nominalControls(ell);
-
-    std::string name_regre("SELQR.txt");
-    std::string filename2 =  name_regre;
-    selqr.estimatePath(xStart);
-
-    selqr.getNominalState(systemPath);
-    selqr.getNominalControl(nominalControls);
-
-
-    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename2);
+    out.close();
 
     return 0;
 

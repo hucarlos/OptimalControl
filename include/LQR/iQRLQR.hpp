@@ -64,8 +64,8 @@ class iQRLQR : public iLQR<xDim, uDim>
         {
 
             ExtendedState mean;
-            mean.subvec(0, xDim-1)             = xHat[t];
-            mean.subvec(xDim, xDim + uDim -1)  = uHat[t];
+            mean.subvec(0, xDim-1)             = xHat.at(t);
+            mean.subvec(xDim, xDim + uDim -1)  = uHat.at(t);
 
             // ===================== COST TO GO ==================
 
@@ -86,8 +86,9 @@ class iQRLQR : public iLQR<xDim, uDim>
             }
             while(std::abs(error) > epsilon);
 
-            const double max = M.diag().max();
-            regularize<xDim + uDim>(M, 0.0, 2*max);
+            toZero<xDim + uDim>(M, 1.0e-9);
+            const double max = M.diag().max();//0.1;
+            regularize<xDim + uDim>(M, 0.0, max);
             m = m - M*mean;
 
             //Quadratic terms
@@ -111,7 +112,7 @@ class iQRLQR : public iLQR<xDim, uDim>
         {
 
             const State x   = state.subvec(0, xDim - 1);
-            const Control u = state.subvec(xDim, xDim + uDim -1);
+            const Control u = state.subvec(xDim, xDim + uDim - 1);
 
             const double instantaneous_cost = this->systemCost->evaluate(x, u);
 
@@ -133,11 +134,11 @@ class iQRLQR : public iLQR<xDim, uDim>
             {
                 if(r == 2)
                 {
-                    radius(r) *= 0.2;
+                    radius(r) *= 0.1;
                 }
                 else
                 {
-                    radius(r) *= 0.4;
+                    radius(r) *= 0.5;
                 }
             }
         }

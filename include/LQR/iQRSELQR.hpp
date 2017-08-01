@@ -30,9 +30,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
                  const std::string&name="iQRSELQR"):
 
             SELQR<xDim, uDim>(ell, ptr_system, ptr_init_cost, ptr_system_cost, ptr_final_cost, VIS, name),
-
-            f_cost2Go(std::bind(&iQRSELQR<xDim, uDim>::cost2Go,this, std::placeholders::_1)),
-            f_cost2Come(std::bind(&iQRSELQR<xDim, uDim>::cost2Come, this, std::placeholders::_1)),
             epsilon(1.0e-2)
         {
 
@@ -89,9 +86,12 @@ class iQRSELQR : public SELQR<xDim, uDim>
             }
             while(std::abs(error) > evalEpsilon);
 
-            const double max = 2.0*std::abs(M.diag().max());
+//            const double max = 0.1;std::abs(M.diag().max());
+//            toZero(M, 1.0e-9);
+//            regularize<xDim + uDim>(M, 0.0, max);
 
-            regularize<xDim + uDim>(M, 1.0e-3, max);
+            checkM(M);
+
             m = m - M*mean;
 
             //Quadratic terms
@@ -167,11 +167,15 @@ class iQRSELQR : public SELQR<xDim, uDim>
             }
             while(std::abs(error) > evalEpsilon);
 
+//            toZero<xDim + uDim>(M, 1.0e-9);
 
 
-            const double max = 2.0 * std::abs(M.diag().max());
+//            const double max = 0.1; std::abs(M.diag().max());
 
-            regularize<xDim + uDim>(M, 1.0e-3, max);
+//            regularize<xDim + uDim>(M, 0.0, max);
+
+            checkM(M);
+
             m = m - M*mean;
 
 
@@ -188,12 +192,22 @@ class iQRSELQR : public SELQR<xDim, uDim>
         }
 
 
+        void checkM(ExtendedStateMatrix&M)
+        {
+
+            const double min = 0.0;
+            const double fac = 0.1; // or std::abs(M.diag().max());
+
+            toZero<xDim + uDim>(M, 1.0e-9);
+            regularize<xDim + uDim>(M, min, fac);
+        }
+
+
         /**
          * @brief setParameters
          */
         void setParameters()
         {
-
 
         }
 
@@ -210,12 +224,9 @@ class iQRSELQR : public SELQR<xDim, uDim>
             epsilon *= 0.1;
             estimateEpsilon();
 
+            initRadius *=0.5;
+
             this->reset(nominalU);
-
-            this->SBar.at(0)          = zeros<mat>(xDim, xDim);
-            this->sBar.at(0)          = zeros<vec>(xDim);
-            this->scalar_sBar.at(0)   = 0.0;
-
         }
 
         /**
@@ -325,7 +336,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
         double estimateEpsilon()
         {
 
-            epsilon = std::max(1.0e-8, epsilon);
+            epsilon = std::max(1.0e-5, epsilon);
             return epsilon;
         }
 
@@ -349,8 +360,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
                 }
             }
         }
-
-
 
 
         /**
@@ -402,9 +411,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
         }
 
     protected:
-
-        const std::function< double(const ExtendedState&)> f_cost2Go;
-        const std::function< double(const ExtendedState&)> f_cost2Come;
 
         // Regression quadratic parameters
         ExtendedState initRadius;

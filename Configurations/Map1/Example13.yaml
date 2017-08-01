@@ -21,8 +21,8 @@ iQRLQR:
   radius: [1, 1, 1, 1, 1]
 
 iQRSELQR:
-  epsilon: [2.0e-3] # epsilon
-  radius: [1, 1, 1, 1, 1] 
+  epsilon: [1.0e-3] # epsilon
+  radius: [1, 1, 0.01, 1, 1] 
 
 mapFile:
   values: [map1.yaml]

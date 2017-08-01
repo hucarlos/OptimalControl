@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+
     std::string file(argv[1]);
 
     ObstaclesParameters<XDIM, UDIM>params;
@@ -65,7 +66,11 @@ int main(int argc, char *argv[])
 
     const string mapfile        = params.mapName;
 
-
+    // For saving results
+    std::vector<State>systemPath(ell +1);
+    std::vector<Control>nominalControls(ell);
+    std::string filename;
+    const std::string ext(".txt");
 
     //============================ Set the obstacles =========================
     arma::vec2 bottomLeft, topRight;
@@ -98,6 +103,14 @@ int main(int argc, char *argv[])
     selqr.estimate(xStart, max_iter, delta, lNominal);
     std::cout<<"SELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl<<endl;
 
+    filename = selqr.getName() + ext;
+    selqr.estimatePath(xStart);
+
+    selqr.getNominalState(systemPath);
+    selqr.getNominalControl(nominalControls);
+
+    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+
     // ========================================= iQRLQR ALGORITHMS =============================
 
     iQRLQR<XDIM, UDIM>iqrlqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
@@ -107,6 +120,15 @@ int main(int argc, char *argv[])
     t1=timeNow();
     iqrlqr.estimate(xStart, max_iter, delta, lNominal);
     std::cout<<"iQRLQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl;
+
+    filename = iqrlqr.getName() + ext;
+    iqrlqr.estimatePath(xStart);
+
+    iqrlqr.getNominalState(systemPath);
+    iqrlqr.getNominalControl(nominalControls);
+
+    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+
 
     // ========================================= iQRSELQR ALGORITHMS =============================
 
@@ -118,24 +140,15 @@ int main(int argc, char *argv[])
     qrselqr.estimate(xStart, max_iter, delta, lNominal);
     std::cout<<"iQRSELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl;
 
-    std::vector<State>systemPath(ell +1);
-    std::vector<Control>nominalControls(ell);
+    filename = qrselqr.getName() + ext;
+    std::cout<<"Final cost: "<<qrselqr.estimatePath(xStart)<<endl;
 
-    std::string name_SELQR("SELQR.txt");
-    selqr.estimatePath(xStart);
+    qrselqr.getNominalState(systemPath);
+    qrselqr.getNominalControl(nominalControls);
 
-    selqr.getNominalState(systemPath);
-    selqr.getNominalControl(nominalControls);
+    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
-    printPathControls<XDIM, UDIM>(systemPath, nominalControls, name_SELQR);
 
-    std::string name_iQRLQR("iQRLQR.txt");
-    iqrlqr.estimatePath(xStart);
-
-    iqrlqr.getNominalState(systemPath);
-    iqrlqr.getNominalControl(nominalControls);
-
-    printPathControls<XDIM, UDIM>(systemPath, nominalControls, name_iQRLQR);
 
     return 0;
 

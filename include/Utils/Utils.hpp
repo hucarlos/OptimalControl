@@ -27,32 +27,48 @@ typedef std::chrono::high_resolution_clock::time_point TimeVar;
  * @return
  */
 template <uword aDim>
-int regularize(mat &Q, const double&epsilon, const double&factor)
+void regularize(mat &Q, const double&epsilon, const double&factor)
 {
 
-    int counter = 0;
 
-    // Use eigen solver
-    vec eigval;
-    mat eigvec;
-
-    eig_sym(eigval, eigvec, Q, "std");
-
-    for (int i = 0; i < aDim; ++i)
+    try
     {
-        if (eigval(i) < epsilon)
+        // Use eigen solver
+        vec eigval;
+        mat eigvec;
+
+        if( eig_sym(eigval, eigvec, Q, "std"))
         {
-            eigval(i) = factor;
-            counter++;
+
+            for (int i = 0; i < aDim; ++i)
+            {
+                if(eigval(i)<0)
+                {
+                    eigval(i) *= -1.0;
+                }
+
+                if (eigval(i) < epsilon)
+                {
+                    eigval(i) = factor;
+                }
+
+                arma::mat D(aDim, aDim, fill::zeros);
+                D.diag() = eigval;
+
+                Q = eigvec * D * eigvec.t();
+            }
         }
+
+        else
+        {
+            throw(std::logic_error("Not eigen decomposition"));
+        }
+
     }
-
-    arma::mat D(aDim, aDim, fill::zeros);
-    D.diag() = eigval;
-
-    Q = eigvec * D * eigvec.t();
-
-    return counter;
+    catch(std::logic_error&e)
+    {
+        throw std::logic_error(e.what());
+    }
 }
 
 

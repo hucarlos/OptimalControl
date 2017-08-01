@@ -108,7 +108,35 @@ class BasicLQR
             return cost;
         }
 
+        /**
+         * @brief clearAll
+         */
+        void clearAll()
+        {
+            std::fill(L.begin(), L.end(), zeros<mat>(uDim, xDim));
+            std::fill(l.begin(), l.end(), zeros<vec>(uDim));
 
+            std::fill(nominalState.begin(), nominalState.end(), zeros<vec>(xDim));
+
+            std::fill(nominalControls.begin(), nominalControls.end(), zeros<vec>(uDim));
+
+            setAccum(0.0);
+            setIteratios(0);
+            setTime(0);
+            setProgress(0.0);
+        }
+
+        void setl(const std::vector<Control>&in)
+        {
+            if(in.size() == getHorizont())
+            {
+                l = in;
+            }
+            else
+            {
+                throw std::runtime_error("Bad open loop control size");
+            }
+        }
 
     public:
 
@@ -162,6 +190,11 @@ class BasicLQR
         void getNominalControl(std::vector<Control>&out) const
         {
             out = nominalControls;
+        }
+
+        std::string getName() const
+        {
+            return className;
         }
 
     protected:

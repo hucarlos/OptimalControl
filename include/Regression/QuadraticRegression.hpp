@@ -16,12 +16,12 @@ class QuadraticRegression
         typedef arma::vec::fixed<xDim>Inputs;
         typedef arma::mat::fixed<xDim, xDim>InputsMat;
 
-        QuadraticRegression(): gaussian_sampling(true), samples_factor(3), seed(0)
+        QuadraticRegression(): gaussian_sampling(true), samples_factor(2), seed(0)
         {
 
         }
 
-        QuadraticRegression(const bool gauss, const uint64_t&s): gaussian_sampling(gauss), samples_factor(3), seed(s)
+        QuadraticRegression(const bool gauss, const uint64_t&s): gaussian_sampling(gauss), samples_factor(2), seed(s)
         {
 
         }
@@ -66,6 +66,7 @@ class QuadraticRegression
             {
 
                 const int ncols = cov.n_cols;
+                arma_rng::set_seed(seed);
                 arma::mat Y     = arma::randn(samples_gaussian, ncols);
                 samples         = (arma::repmat(mean, 1, samples_gaussian).t() + Y * arma::chol(cov)).t();
             }

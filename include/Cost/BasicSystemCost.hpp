@@ -2,6 +2,7 @@
 #define BASICSYSTEMCOST_HPP
 
 #include <iostream>
+#define ARMA_DONT_PRINT_ERRORS
 #include <armadillo>
 
 using namespace arma;
