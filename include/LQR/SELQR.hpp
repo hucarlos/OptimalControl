@@ -203,6 +203,7 @@ class SELQR : public BasicLQR<xDim, uDim>
             }
 
             this->setIteratios(maxIter);
+            newCost = this->estimatePath(xHat);
             this->setAccum(newCost);
             return newCost;
 
@@ -447,6 +448,7 @@ class SELQR : public BasicLQR<xDim, uDim>
                                        const int t)
         {
 
+
             this->L.at(t) = -solve(E, C);     //-(E.colPivHouseholderQr().solve(C));
             this->l.at(t) = -solve(E, e);      //-(E.colPivHouseholderQr().solve(e));
 
@@ -479,6 +481,7 @@ class SELQR : public BasicLQR<xDim, uDim>
         {
 
         }
+
 
         /**
          * @brief reset

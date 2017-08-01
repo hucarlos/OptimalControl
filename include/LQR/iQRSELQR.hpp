@@ -86,9 +86,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
             }
             while(std::abs(error) > evalEpsilon);
 
-//            const double max = 0.1;std::abs(M.diag().max());
-//            toZero(M, 1.0e-9);
-//            regularize<xDim + uDim>(M, 0.0, max);
 
             checkM(M);
 
@@ -167,12 +164,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
             }
             while(std::abs(error) > evalEpsilon);
 
-//            toZero<xDim + uDim>(M, 1.0e-9);
-
-
-//            const double max = 0.1; std::abs(M.diag().max());
-
-//            regularize<xDim + uDim>(M, 0.0, max);
 
             checkM(M);
 
@@ -196,7 +187,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
         {
 
             const double min = 0.0;
-            const double fac = 0.1; // or std::abs(M.diag().max());
+            const double fac = std::abs(M.diag().max());
 
             toZero<xDim + uDim>(M, 1.0e-9);
             regularize<xDim + uDim>(M, min, fac);

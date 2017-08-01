@@ -44,6 +44,8 @@ int main(int argc, char *argv[])
     unsigned int experiment = 0;
 
     ofstream out("Cords.txt", std::ofstream::out);
+    ofstream win("Wins.txt", std::ofstream::out);
+
     State xStart, xGoal;
 
     do
@@ -138,6 +140,9 @@ int main(int argc, char *argv[])
             if(selqr.getAccum() > qrselqr.getAccum())
             {
                 winner ++;
+                win << timeSELQR            <<'\t'   << timeQRSELQR<<'\t'
+                    << selqr.getAccum()     <<'\t'   << qrselqr.getAccum()<<'\t'
+                    << selqr.iterations()   <<'\t'   << qrselqr.iterations()<<endl;
             }
             else
             {
@@ -161,6 +166,9 @@ int main(int argc, char *argv[])
         }
     }
     while(experiment < countExperiments);
+
+    out.close();
+    win.close();
 
     std::cout<<"Win %: "<<(double(winner)/countExperiments)*100<<endl;
 
