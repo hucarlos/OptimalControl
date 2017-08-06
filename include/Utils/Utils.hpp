@@ -129,7 +129,7 @@ void regularize(const mat &Q, mat&Qp, const double&epsilon, const double&factor)
  * @param epsilon
  */
 template<uword xDim, uword yDim>
-void toZero(arma::mat::fixed<xDim, yDim>&M, const double&epsilon=1.0e-06)
+void toZero(mat&M, const double&epsilon=1.0e-9)
 {
     for(unsigned int i=0; i<M.n_rows; i++)
     {
@@ -253,6 +253,47 @@ double funcTime(F&func,  Args&&... args)
     TimeVar t1=timeNow();
     func.estimate(std::forward<Args>(args)...);
     return duration(timeNow()-t1);
+}
+
+
+#include <array>
+#include <vector>
+#include <algorithm>
+
+template <typename T, size_t N>
+/**
+ * @brief generate_rectified_hypercube
+ * @return
+ */
+std::vector<std::array<T, N>> generate_rectified_hypercube()
+{
+    std::vector<std::array<T, N>> vertices;  // result data
+    std::array<T, N> set; // set to permute upon
+    // Initialize set to { 0, 1, ..., 1 }
+    set[0] = T(0);
+    for (size_t i = 1; i < N; ++i) set[i] = T(1);
+
+    // Generate vertices
+
+    // Add all possible permutations of initial set (unrolled loop for i=0)
+    do {
+        vertices.push_back(set);
+    } while (std::next_permutation(set.begin(), set.end()));
+
+    for (size_t i = 1; i < N; ++i) { // do the rest of them
+
+        // Modify set to be seed for next group of permutations:
+        // "abusing" the known state after last std::next_permutation call
+        set[i-1] = T(-1);    // Here was zero previously
+        set[i] = T(0);       // Here was first 1
+
+        // Add all possible permutations of current set
+        do {
+            vertices.push_back(set);
+        } while (std::next_permutation(set.begin(), set.end()));
+
+    }
+    return vertices;
 }
 
 #endif // UTILS_HPP

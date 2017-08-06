@@ -4,7 +4,7 @@
 #include <iostream>
 #include <armadillo>
 
-//#include <Regression/SigmaPoints.hpp>
+#include <Regression/SigmaPoints.hpp>
 
 using namespace std;
 using namespace arma;
@@ -16,7 +16,12 @@ class QuadraticRegression
         typedef arma::vec::fixed<xDim>Inputs;
         typedef arma::mat::fixed<xDim, xDim>InputsMat;
 
-        QuadraticRegression(): gaussian_sampling(true), samples_factor(2), seed(0)
+        QuadraticRegression(): gaussian_sampling(true), samples_factor(2), seed(1)
+        {
+
+        }
+
+        QuadraticRegression(const bool&gs): gaussian_sampling(gs), samples_factor(2), seed(1)
         {
 
         }
@@ -57,7 +62,7 @@ class QuadraticRegression
             const unsigned int unknow           = ((xDim * (xDim+1))/2) + xDim;
             const unsigned int samples_gaussian = samples_factor * unknow;
 
-            arma::mat samples(xDim, samples_gaussian, fill::zeros);
+            arma::mat samples;
 
             InputsMat cov   = zeros<mat>(xDim, xDim);
             cov.diag()      = radius;
@@ -65,6 +70,7 @@ class QuadraticRegression
             if(gaussian_sampling)
             {
 
+                samples = mat(xDim, samples_gaussian, fill::zeros);
                 const int ncols = cov.n_cols;
                 arma_rng::set_seed(seed);
                 arma::mat Y     = arma::randn(samples_gaussian, ncols);
@@ -72,55 +78,58 @@ class QuadraticRegression
             }
             else
             {
-//                MatrixXd points_i;
-//                const unsigned int count_sigma_point = (2*xDim + 1);
-//                const unsigned int samples_sigma = samples_factor * count_sigma_point;
 
-//                samples = MatrixXd::Zero(xDim, samples_sigma);
+                Inputs startRadius = radius;
+                const int count_points   = std::ceil((xDim + 3)/8) + 1;
+                const int samples4Sigma  =  (1 << xDim) + 2*xDim;
 
-//                const double startAlpha = 1.0e-2;
+                const int count_samples  = samples_factor * count_points;
 
-//                for(unsigned int si=0; si<samples_factor; si++)
-//                {
+                arma::mat points;
 
-//                    double alpha = startAlpha * 0.1;
-//                    sigmaPoints<xDim>(mean, cov, points_i, alpha);
+                samples = mat(xDim, samples4Sigma*count_samples, fill::zeros);
 
-//                    // Block of size (p,q), starting at (i,j)
+                SigmaPoints<xDim>sPoints;
 
-//                    int begin_col = si * count_sigma_point;
+                for(int i=0; i<count_samples; i++)
+                {
+                    //sigmaPoints<xDim>(mean, radius, points);
 
-//                    samples.block(0,begin_col, xDim, count_sigma_point) = points_i;
-//                }
+                    sPoints.estimate(mean, radius, points);
+
+                    samples.submat(0, i*samples4Sigma, size(xDim, samples4Sigma)) = points.submat(0,1,size(xDim, samples4Sigma));
+
+                    startRadius *= 0.5;
+                }
+
             }
 
             double relative_error = this->solve(cost, mean, samples, A, a, scalar, lambda);
             return relative_error;
         }
 
-
-                /**
-                 * @brief getRegression
-                 * @param cost
-                 * @param state
-                 * @param A
-                 * @param a
-                 * @param alpha
-                 * @param lambda
-                 * @param print
-                 * @return
-                 */
-                double getRegression(std::function<double (const Inputs&)>cost,
-                                     const Inputs&mean,
-                                     InputsMat&A,
-                                     Inputs&a,
-                                     double&scalar,
-                                     const double&alpha=0.01,
-                                     const double&lambda=0.0)
-                {
-                    Inputs radius = alpha * ones<vec>(xDim);
-                    return this->getRegression(cost, mean, A, a, scalar, radius, lambda);
-                }
+        /**
+         * @brief getRegression
+         * @param cost
+         * @param mean
+         * @param A
+         * @param a
+         * @param scalar
+         * @param alpha
+         * @param lambda
+         * @return
+         */
+        double getRegression(std::function<double (const Inputs&)>cost,
+                             const Inputs&mean,
+                             InputsMat&A,
+                             Inputs&a,
+                             double&scalar,
+                             const double&alpha=0.01,
+                             const double&lambda=0.0)
+        {
+            Inputs radius = alpha * ones<vec>(xDim);
+            return this->getRegression(cost, mean, A, a, scalar, radius, lambda);
+        }
 
 
         /**
@@ -135,12 +144,12 @@ class QuadraticRegression
          * @return
          */
         double solve(std::function<double (const Inputs&)>cost,
-                         const Inputs&mean,
-                         const mat&samples,
-                         InputsMat&A,
-                         Inputs&a,
-                         double&scalar,
-                         const double&lambda=0.0)
+                     const Inputs&mean,
+                     const mat&samples,
+                     InputsMat&A,
+                     Inputs&a,
+                     double&scalar,
+                     const double&lambda=0.0)
         {
 
 
@@ -155,8 +164,8 @@ class QuadraticRegression
             const int samples_count = samples.n_cols;
 
 
-           mat X(samples_count, unknow, fill::zeros);
-           vec y(samples_count, fill::zeros);
+            mat X(samples_count, unknow, fill::zeros);
+            vec y(samples_count, fill::zeros);
 
 
             // Cicle for every sample
@@ -228,7 +237,7 @@ class QuadraticRegression
 
         }
 
-    
+
         /**
          * @brief estimateError
          * @param cost

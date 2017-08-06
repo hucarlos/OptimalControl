@@ -179,7 +179,7 @@ class SELQR : public BasicLQR<xDim, uDim>
                     setParameters();
 
                     // If something goes wrong try to start again
-                    if(std::isnan(this->getAccum()) || (!isfinite(this->getAccum())) )
+                    if(std::isnan(this->getAccum()) || (!isfinite(this->getAccum())) || (this->getProgress() == -1.0))
                     {
                         newCost  = 0.0;
                         oldCost  = -std::log(0.0);

@@ -86,7 +86,7 @@ class iQRLQR : public iLQR<xDim, uDim>
             }
             while(std::abs(error) > epsilon);
 
-            toZero<xDim + uDim>(M, 1.0e-9);
+            toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
             const double max = M.diag().max();//0.1;
             regularize<xDim + uDim>(M, 0.0, max);
             m = m - M*mean;

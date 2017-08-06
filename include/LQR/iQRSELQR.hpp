@@ -30,7 +30,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
                  const std::string&name="iQRSELQR"):
 
             SELQR<xDim, uDim>(ell, ptr_system, ptr_init_cost, ptr_system_cost, ptr_final_cost, VIS, name),
-            epsilon(1.0e-2)
+            epsilon(1.0e-2), gaussian_sampling(false)
         {
 
 
@@ -58,7 +58,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
             ExtendedState m;
             double scalar;
 
-            regression.setGaussianSampling(true);
+            regression.setGaussianSampling(gaussian_sampling);
 
             std::function< double(const ExtendedState&)> function;
 
@@ -137,7 +137,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
             ExtendedState m;
             double scalar;
 
-            regression.setGaussianSampling(true);
+            regression.setGaussianSampling(gaussian_sampling);
 
             std::function< double(const ExtendedState&)> function;
 
@@ -189,7 +189,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
             const double min = 0.0;
             const double fac = std::abs(M.diag().max());
 
-            toZero<xDim + uDim>(M, 1.0e-9);
+            toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
             regularize<xDim + uDim>(M, min, fac);
         }
 
@@ -347,7 +347,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
                 }
                 else
                 {
-                    radius(r) *= 0.4;
+                    radius(r) *= 0.95;
                 }
             }
         }
@@ -408,6 +408,8 @@ class iQRSELQR : public SELQR<xDim, uDim>
         ExtendedState radius;
         double epsilon;
         double error;
+
+        const bool gaussian_sampling;
 
 
 };
