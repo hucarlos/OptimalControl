@@ -6,6 +6,9 @@
 
 #include <Regression/SigmaPoints.hpp>
 
+#include "tbb/parallel_for.h"
+#include "tbb/task_scheduler_init.h"
+
 using namespace std;
 using namespace arma;
 
@@ -16,12 +19,12 @@ class QuadraticRegression
         typedef arma::vec::fixed<xDim>Inputs;
         typedef arma::mat::fixed<xDim, xDim>InputsMat;
 
-        QuadraticRegression(): gaussian_sampling(true), samples_factor(2), seed(1)
+        QuadraticRegression(): gaussian_sampling(true), samples_factor(1), seed(1)
         {
 
         }
 
-        QuadraticRegression(const bool&gs): gaussian_sampling(gs), samples_factor(2), seed(1)
+        QuadraticRegression(const bool&gs): gaussian_sampling(gs), samples_factor(1), seed(1)
         {
 
         }
@@ -171,37 +174,8 @@ class QuadraticRegression
             // Cicle for every sample
             const double nominal_value = cost(mean);
 
-            for(int i=0; i<samples_count; i++)
-            {
-                const Inputs sample = samples.col(i);
-                const double value  = cost(sample);
-                const Inputs diff   = sample - mean;
-
-                // Cicle for all the matrix values
-                int p = 0;
-                for(unsigned int r=0; r<xDim; r++)
-                {
-                    for(unsigned int c=r; c<xDim; c++, p++)
-                    {
-                        X(i,p)  = diff(r)*diff(c);
-
-                        X(i,p) *= 0.5;
-
-                        if(c>r)
-                        {
-                            X(i,p) *= 2.0;
-                        }
-                    }
-                }
-
-                for(int r=0; r<xDim; r++, p++)
-                {
-                    X(i,p) = diff(r);
-                }
-
-                y(i) = (value - nominal_value);
-
-            }
+            buildSerial(cost, mean, nominal_value, samples, X, y);
+//            buildParallel(cost, mean, nominal_value, samples, X, y);
 
             // Obtain the solution
             const mat::fixed<unknow, unknow>I = eye<mat>(unknow, unknow);
@@ -277,6 +251,107 @@ class QuadraticRegression
         {
             gaussian_sampling = in;
         }
+
+    protected:
+
+        /**
+         * @brief buildSerial
+         * @param cost
+         * @param mean
+         * @param nominal_value
+         * @param samples
+         * @param X
+         * @param y
+         */
+        void buildSerial(std::function<double (const Inputs&)>cost, const vec&mean,
+                         const double&nominal_value, const mat&samples, mat&X, vec&y)
+        {
+            for(int i=0; i<samples.n_cols; i++)
+            {
+                const Inputs sample = samples.col(i);
+                const double value  = cost(sample);
+                const Inputs diff   = sample - mean;
+
+                // Cicle for all the matrix values
+                int p = 0;
+                for(unsigned int r=0; r<xDim; r++)
+                {
+                    for(unsigned int c=r; c<xDim; c++, p++)
+                    {
+                        X(i,p)  = diff(r)*diff(c);
+
+                        X(i,p) *= 0.5;
+
+                        if(c>r)
+                        {
+                            X(i,p) *= 2.0;
+                        }
+                    }
+                }
+
+                for(int r=0; r<xDim; r++, p++)
+                {
+                    X(i,p) = diff(r);
+                }
+
+                y(i) = (value - nominal_value);
+
+            }
+        }
+
+
+        /**
+         * @brief buildParallel
+         * @param cost
+         * @param mean
+         * @param nominal_value
+         * @param samples
+         * @param X
+         * @param y
+         */
+        void buildParallel(std::function<double (const Inputs&)>cost, const vec&mean,
+                           const double&nominal_value, const mat&samples, mat&X, vec&y)
+        {
+            tbb::task_scheduler_init init(3);
+            tbb::parallel_for(
+                        tbb::blocked_range<size_t>(0, samples.n_cols),
+                        [&X,&y,&mean,&nominal_value, &samples, &cost](const tbb::blocked_range<size_t>& r)
+            {
+                for (size_t i=r.begin();i<r.end();++i)
+                {
+                    const Inputs sample = samples.col(i);
+                    const double value  = cost(sample);
+                    const Inputs diff   = sample - mean;
+
+                    // Cicle for all the matrix values
+                    int p = 0;
+                    for(unsigned int r=0; r<xDim; r++)
+                    {
+                        for(unsigned int c=r; c<xDim; c++, p++)
+                        {
+                            X(i,p)  = diff(r)*diff(c);
+
+                            X(i,p) *= 0.5;
+
+                            if(c>r)
+                            {
+                                X(i,p) *= 2.0;
+                            }
+                        }
+                    }
+
+                    for(int r=0; r<xDim; r++, p++)
+                    {
+                        X(i,p) = diff(r);
+                    }
+
+                    y(i) = (value - nominal_value);
+
+                }
+
+            });
+        }
+
 
     protected:
 

@@ -119,11 +119,11 @@ int main(int argc, char *argv[])
             // Same radius and epsilon for all examples
             const double epsilon = 1.0e-2;
             vec::fixed<XDIM + UDIM>radius = ones<vec>(XDIM + UDIM);
-            radius(0) = 100;
-            radius(1) = 100;
-            radius(2) = 0.1;
-            radius(3) = 100;
-            radius(4) = 100;
+            radius(0) = 1;
+            radius(1) = 1;
+            radius(2) = 0.3;
+            radius(3) = 1;
+            radius(4) = 1;
 
             // ========================================= SELQR ALGORITHMS =============================
 

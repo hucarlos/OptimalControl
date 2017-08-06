@@ -99,17 +99,17 @@ int main(int argc, char *argv[])
     // ========================================= SELQR ALGORITHMS =============================
 
     SELQR<XDIM, UDIM>selqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
-    t1=timeNow();
-    selqr.estimate(xStart, max_iter, delta, lNominal);
-    std::cout<<"SELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl<<endl;
+//    t1=timeNow();
+//    selqr.estimate(xStart, max_iter, delta, lNominal);
+//    std::cout<<"SELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl<<endl;
 
-    filename = selqr.getName() + ext;
-    selqr.estimatePath(xStart);
+//    filename = selqr.getName() + ext;
+//    selqr.estimatePath(xStart);
 
-    selqr.getNominalState(systemPath);
-    selqr.getNominalControl(nominalControls);
+//    selqr.getNominalState(systemPath);
+//    selqr.getNominalControl(nominalControls);
 
-    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+//    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
     // ========================================= iQRLQR ALGORITHMS =============================
 
@@ -117,17 +117,17 @@ int main(int argc, char *argv[])
     iqrlqr.setInitRadius(params.iQRLQR.initRadius);
     iqrlqr.setEpsilon(params.iQRLQR.epsilon);
 
-    t1=timeNow();
-    iqrlqr.estimate(xStart, max_iter, delta, lNominal);
-    std::cout<<"iQRLQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl;
+//    t1=timeNow();
+//    iqrlqr.estimate(xStart, max_iter, delta, lNominal);
+//    std::cout<<"iQRLQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl;
 
-    filename = iqrlqr.getName() + ext;
-    iqrlqr.estimatePath(xStart);
+//    filename = iqrlqr.getName() + ext;
+//    iqrlqr.estimatePath(xStart);
 
-    iqrlqr.getNominalState(systemPath);
-    iqrlqr.getNominalControl(nominalControls);
+//    iqrlqr.getNominalState(systemPath);
+//    iqrlqr.getNominalControl(nominalControls);
 
-    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+//    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
 
     // ========================================= iQRSELQR ALGORITHMS =============================
