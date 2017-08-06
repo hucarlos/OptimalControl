@@ -12,4 +12,4 @@ include_directories("${PROJECT_INCLUDE_DIR}")
 
 #add_subdirectory(CostFunctions)
 add_subdirectory(LQR)
-#add_subdirectory(Regression)
+add_subdirectory(Regression)

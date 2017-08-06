@@ -99,7 +99,7 @@ int main()
 
     const double alpha                  = 1.0e-2;
 
-    QuadraticRegression<XDIM + UDIM>qr;
+    QuadraticRegression<XDIM + UDIM>qr(false);
 
     // Results matrix
     ExtendedStateMat M;

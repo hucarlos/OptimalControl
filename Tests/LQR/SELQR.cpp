@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
             vec::fixed<XDIM + UDIM>radius = ones<vec>(XDIM + UDIM);
             radius(0) = 1;
             radius(1) = 1;
-            radius(2) = 0.2;
+            radius(2) = 0.5;
             radius(3) = 1;
             radius(4) = 1;
 

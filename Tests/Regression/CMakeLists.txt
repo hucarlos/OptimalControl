@@ -14,3 +14,6 @@ target_link_libraries(Quadratic ${ARMADILLO_LIBRARIES})
 add_executable(LQ LQ.cpp)
 target_link_libraries(LQ ${ARMADILLO_LIBRARIES})
 
+add_executable(SigmaPoints SigmaPoints.cpp)
+target_link_libraries(SigmaPoints ${ARMADILLO_LIBRARIES})
+
