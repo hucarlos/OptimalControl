@@ -30,12 +30,11 @@ class iQRSELQR : public SELQR<xDim, uDim>
                  const std::string&name="iQRSELQR"):
 
             SELQR<xDim, uDim>(ell, ptr_system, ptr_init_cost, ptr_system_cost, ptr_final_cost, VIS, name),
-            epsilon(1.0e-2), gaussian_sampling(false)
+            epsilon(1.0e-2), gaussian_sampling(false), sampling_factor(1)
         {
 
 
         }
-
 
         void quadratizeCost2Come(const State&xHat, const Control&uHat, const int&t,
                                  StateMatrix&D,
@@ -45,7 +44,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
                                  Control&e,
                                  double&scalar_b)
         {
-            QuadraticRegression<xDim + uDim>regression;
+            QuadraticRegression<xDim + uDim>regression(gaussian_sampling, sampling_factor);
 
             const State xHatPrime   = this->system->move(xHat, uHat);
 
@@ -57,8 +56,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
             ExtendedStateMatrix M;
             ExtendedState m;
             double scalar;
-
-            regression.setGaussianSampling(gaussian_sampling);
 
             std::function< double(const ExtendedState&)> function;
 
@@ -124,7 +121,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
                                Control&e,
                                double&scalar_b)
         {
-            QuadraticRegression<xDim + uDim>regression;
+            QuadraticRegression<xDim + uDim>regression(gaussian_sampling, sampling_factor);
 
             const State xHatPrime   = this->system->inverse_dynamics(xHat, uHat);
 
@@ -148,8 +145,8 @@ class iQRSELQR : public SELQR<xDim, uDim>
             }
             else
             {
-            function = std::function< double(const ExtendedState&)>(std::bind(&iQRSELQR<xDim, uDim>::cost2Go,
-                                                                                 this, std::placeholders::_1));
+                function = std::function< double(const ExtendedState&)>(std::bind(&iQRSELQR<xDim, uDim>::cost2Go,
+                                                                                  this, std::placeholders::_1));
             }
 
             const double evalEpsilon = estimateEpsilon();
@@ -401,6 +398,42 @@ class iQRSELQR : public SELQR<xDim, uDim>
             epsilon = value;
         }
 
+        /**
+         * @brief getGaussian_sampling
+         * @return
+         */
+        bool getGaussianSampling() const
+        {
+            return gaussian_sampling;
+        }
+
+        /**
+         * @brief setGaussian_sampling
+         * @param value
+         */
+        void setGaussiaSampling(bool value)
+        {
+            gaussian_sampling = value;
+        }
+
+        /**
+         * @brief getSampling_factor
+         * @return
+         */
+        unsigned int getSamplingFactor() const
+        {
+            return sampling_factor;
+        }
+
+        /**
+         * @brief setSampling_factor
+         * @param value
+         */
+        void setSamplingFactor(unsigned int value)
+        {
+            sampling_factor = value;
+        }
+
     protected:
 
         // Regression quadratic parameters
@@ -409,13 +442,12 @@ class iQRSELQR : public SELQR<xDim, uDim>
         double epsilon;
         double error;
 
-        const bool gaussian_sampling;
+        bool gaussian_sampling;
+        unsigned int sampling_factor;
 
 
 };
 
 #endif // IQRSELQR_HPP
-
-
 
 

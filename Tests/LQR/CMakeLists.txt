@@ -20,3 +20,6 @@ target_link_libraries(QRSELQR ${ARMADILLO_LIBRARIES} ${YAMLCPP_LIBRARY} tbb)
 
 add_executable(Comparation Comparation.cpp)
 target_link_libraries(Comparation ${ARMADILLO_LIBRARIES} ${YAMLCPP_LIBRARY} tbb)
+
+add_executable(QRSELQR_samplings QRSELQR_samplings.cpp)
+target_link_libraries(QRSELQR_samplings ${ARMADILLO_LIBRARIES} ${YAMLCPP_LIBRARY} tbb)
