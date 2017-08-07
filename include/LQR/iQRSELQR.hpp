@@ -186,7 +186,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
         void checkM(ExtendedStateMatrix&M)
         {
 
-            const double min = 0.0;
+            const double min = 1.0e-4;
             const double fac = std::abs(M.diag().max());
 
             toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
@@ -327,7 +327,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
         double estimateEpsilon()
         {
 
-            epsilon = std::max(1.0e-5, epsilon);
+            epsilon = std::max(1.0e-8, epsilon);
             return epsilon;
         }
 
@@ -343,7 +343,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
             {
                 if(r == 2)
                 {
-                    radius(r) *= 0.2;
+                    radius(r) *= 0.1;
                 }
                 else
                 {

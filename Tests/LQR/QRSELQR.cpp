@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     DDR robot(1.0/6.0);
 
     // Create distributions for sampling
-    std::default_random_engine generator(3);
+    std::default_random_engine generator(0);
 
     unsigned int countExperiments = 100;
     unsigned int experiment = 0;
@@ -67,11 +67,11 @@ int main(int argc, char *argv[])
 
             std::uniform_real_distribution<double> init_x(-20, 20);
             std::uniform_real_distribution<double> init_y(-24, -40);
-            std::uniform_real_distribution<double> init_a(0, M_PI);
+            std::uniform_real_distribution<double> init_a(-M_PI, M_PI);
 
             std::uniform_real_distribution<double> final_x(-20, 20);
             std::uniform_real_distribution<double> final_y(25, 40);
-            std::uniform_real_distribution<double> final_a(0, M_PI);
+            std::uniform_real_distribution<double> final_a(-M_PI, M_PI);
 
             xStart(0) = init_x(generator);
             xStart(1) = init_y(generator);
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
             SystemCost<XDIM, UDIM>system_cost(&control_cost, &obstacles_cost);
 
             // Same radius and epsilon for all examples
-            const double epsilon = 1.0e-2;
+            const double epsilon = 1.0e-1;
             vec::fixed<XDIM + UDIM>radius = ones<vec>(XDIM + UDIM);
             radius(0) = 1;
             radius(1) = 1;
@@ -147,7 +147,8 @@ int main(int argc, char *argv[])
                 winner ++;
                 win << timeSELQR            <<'\t'   << timeQRSELQR<<'\t'
                     << selqr.getAccum()     <<'\t'   << qrselqr.getAccum()<<'\t'
-                    << selqr.iterations()   <<'\t'   << qrselqr.iterations()<<endl;
+                    << selqr.iterations()   <<'\t'   << qrselqr.iterations()<<'\t'
+                    << 0.0                  <<'\t'   << qrselqr.getEpsilon() << endl;
             }
             else
             {

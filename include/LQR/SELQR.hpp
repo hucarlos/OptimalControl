@@ -204,7 +204,14 @@ class SELQR : public BasicLQR<xDim, uDim>
 
             this->setIteratios(maxIter);
             newCost = this->estimatePath(xHat);
-            this->setAccum(newCost);
+            if(std::isnan(newCost))
+            {
+                this->setAccum(-std::log(0.0));
+            }
+            else
+            {
+                this->setAccum(newCost);
+            }
             return newCost;
 
         }
