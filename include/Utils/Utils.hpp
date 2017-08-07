@@ -39,75 +39,24 @@ void regularize(mat &Q, const double&epsilon, const double&factor)
 
         if( eig_sym(eigval, eigvec, Q, "std"))
         {
-
-            for (int i = 0; i < aDim; ++i)
+            double max = 0.0;
+            for(unsigned int e=0; e<aDim; e++)
             {
-                if(eigval(i)<0)
-                {
-                    eigval(i) *= -1.0;
-                }
+                max = std::max(std::abs(eigval(e)), factor);
+            }
+
+            for (unsigned int i = 0; i < aDim; ++i)
+            {
 
                 if (eigval(i) < epsilon)
                 {
-                    eigval(i) = factor;
+                    eigval(i) = max;
                 }
 
                 arma::mat D(aDim, aDim, fill::zeros);
                 D.diag() = eigval;
 
                 Q = eigvec * D * eigvec.t();
-            }
-        }
-
-        else
-        {
-            throw(std::logic_error("Not eigen decomposition"));
-        }
-
-    }
-    catch(std::logic_error&e)
-    {
-        throw std::logic_error(e.what());
-    }
-}
-
-
-template <uword aDim>
-/**
- * @brief regularize
- * @param Q
- * @param epsilon
- * @param factor
- */
-void regularize(const mat &Q, mat&Qp, const double&epsilon, const double&factor)
-{
-
-
-    try
-    {
-        // Use eigen solver
-        vec eigval;
-        mat eigvec;
-
-        if( eig_sym(eigval, eigvec, Q, "std"))
-        {
-
-            for (int i = 0; i < aDim; ++i)
-            {
-//                if(eigval(i)<0)
-//                {
-//                    eigval(i) *= -1.0;
-//                }
-
-                if (eigval(i) < epsilon)
-                {
-                    eigval(i) = factor;
-                }
-
-                arma::mat D(aDim, aDim, fill::zeros);
-                D.diag() = eigval;
-
-                Qp = eigvec * D * eigvec.t();
             }
         }
 
