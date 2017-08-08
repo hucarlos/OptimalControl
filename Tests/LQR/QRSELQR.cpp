@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     DDR robot(1.0/6.0);
 
     // Create distributions for sampling
-    std::default_random_engine generator(0);
+    std::default_random_engine generator(26);
 
     unsigned int countExperiments = 100;
     unsigned int experiment = 0;
@@ -117,11 +117,11 @@ int main(int argc, char *argv[])
             SystemCost<XDIM, UDIM>system_cost(&control_cost, &obstacles_cost);
 
             // Same radius and epsilon for all examples
-            const double epsilon = 1.0e-1;
+            const double epsilon = 1.0e-2;
             vec::fixed<XDIM + UDIM>radius = ones<vec>(XDIM + UDIM);
             radius(0) = 1;
             radius(1) = 1;
-            radius(2) = 0.3;
+            radius(2) = 0.2;
             radius(3) = 1;
             radius(4) = 1;
 
@@ -137,6 +137,8 @@ int main(int argc, char *argv[])
             iQRSELQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, false);
             qrselqr.setInitRadius(radius);
             qrselqr.setEpsilon(epsilon);
+            qrselqr.setGaussiaSampling(false);
+            qrselqr.setSamplingFactor(2);
 
             tQRSELQR=timeNow();
             qrselqr.estimate(xStart, max_iter, delta, lNominal);

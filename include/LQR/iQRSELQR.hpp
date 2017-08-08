@@ -184,7 +184,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
         {
 
             const double min = 1.0e-4;
-            const double fac = std::abs(M.diag().max());
+            const double fac = 0.1;
 
             toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
             regularize<xDim + uDim>(M, min, fac);
@@ -336,7 +336,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
         void decreceRadius(ExtendedState&radius)
         {
 
-            for(int r=0; r<(xDim + uDim); r++)
+            for(unsigned int r=0; r<(xDim + uDim); r++)
             {
                 if(r == 2)
                 {

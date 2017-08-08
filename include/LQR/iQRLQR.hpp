@@ -130,7 +130,7 @@ class iQRLQR : public iLQR<xDim, uDim>
         void decreceRadius(ExtendedState&radius)
         {
 
-            for(int r=0; r<(xDim + uDim); r++)
+            for(unsigned int r=0; r<(xDim + uDim); r++)
             {
                 if(r == 2)
                 {
