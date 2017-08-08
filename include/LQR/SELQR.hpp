@@ -423,7 +423,8 @@ class SELQR : public BasicLQR<xDim, uDim>
                                       const double&scalar,
                                       const int t)
         {
-
+            mat EBarp = EBar;
+//            regularize<xDim+uDim>(EBar, 1.0e-4, 0.1);
             this->L.at(t) = -solve(EBar, CBar);    //-(EBar.colPivHouseholderQr().solve(CBar));
             this->l.at(t) = -solve(EBar, eBar);    //-(EBar.colPivHouseholderQr().solve(eBar));
 
@@ -454,8 +455,8 @@ class SELQR : public BasicLQR<xDim, uDim>
                                        const double&scalar,
                                        const int t)
         {
-
-
+            mat Ep = E;
+//            regularize<xDim+uDim>(E, 1.0e-4, 0.1);
             this->L.at(t) = -solve(E, C);     //-(E.colPivHouseholderQr().solve(C));
             this->l.at(t) = -solve(E, e);      //-(E.colPivHouseholderQr().solve(e));
 
