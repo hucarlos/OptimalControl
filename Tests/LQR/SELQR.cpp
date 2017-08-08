@@ -38,9 +38,11 @@ int main(int argc, char *argv[])
     DDR robot(1.0/6.0);
 
     // Create distributions for sampling
-    std::default_random_engine generator;
+    std::default_random_engine generator(26);
 
     ofstream out("Cords.txt", std::ofstream::out);
+    ofstream win("WinsrLQR.txt", std::ofstream::out);
+
 
     unsigned int countExperiments = 100;
     unsigned int experiment = 0;
@@ -109,11 +111,11 @@ int main(int argc, char *argv[])
             SystemCost<XDIM, UDIM>system_cost(&control_cost, &obstacles_cost);
 
             // Same radius and epsilon for all examples
-            const double epsilon = 1.0e-3;
+            const double epsilon = 1.0e-2;
             vec::fixed<XDIM + UDIM>radius = ones<vec>(XDIM + UDIM);
             radius(0) = 1;
             radius(1) = 1;
-            radius(2) = 0.5;
+            radius(2) = 0.1;
             radius(3) = 1;
             radius(4) = 1;
 
@@ -129,6 +131,8 @@ int main(int argc, char *argv[])
             iQRLQR<XDIM, UDIM>iqrlqr(ell, &robot, &init_cost, &system_cost, &final_cost, false);
             iqrlqr.setInitRadius(radius);
             iqrlqr.setEpsilon(epsilon);
+            iqrlqr.setGaussiaSampling(false);
+            iqrlqr.setSamplingFactor(2);
 
             tQRSELQR=timeNow();
             iqrlqr.estimate(xStart, max_iter, delta, lNominal);
@@ -137,6 +141,10 @@ int main(int argc, char *argv[])
             if(selqr.getAccum() > iqrlqr.getAccum())
             {
                 winner ++;
+                win << timeSELQR            <<'\t'   << timeQRSELQR<<'\t'
+                    << selqr.getAccum()     <<'\t'   << iqrlqr.getAccum()<<'\t'
+                    << selqr.iterations()   <<'\t'   << iqrlqr.iterations()<<'\t'
+                    << 0.0                  <<'\t'   << iqrlqr.getEpsilon() << endl;
             }
             else
             {
@@ -162,6 +170,7 @@ int main(int argc, char *argv[])
 
     std::cout<<"Win %: "<<(double(winner)/countExperiments)*100<<endl;
 
+    win.close();
     out.close();
 
     return 0;

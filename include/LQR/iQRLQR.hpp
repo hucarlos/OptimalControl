@@ -69,7 +69,7 @@ class iQRLQR : public iLQR<xDim, uDim>
 
             // ===================== COST TO GO ==================
 
-            QuadraticRegression<xDim + uDim>regression;
+            QuadraticRegression<xDim + uDim>regression(gaussian_sampling, sampling_factor);
 
             // Results matrix
             ExtendedStateMatrix M;
@@ -189,6 +189,42 @@ class iQRLQR : public iLQR<xDim, uDim>
             epsilon = value;
         }
 
+        /**
+         * @brief getGaussian_sampling
+         * @return
+         */
+        bool getGaussianSampling() const
+        {
+            return gaussian_sampling;
+        }
+
+        /**
+         * @brief setGaussian_sampling
+         * @param value
+         */
+        void setGaussiaSampling(bool value)
+        {
+            gaussian_sampling = value;
+        }
+
+        /**
+         * @brief getSampling_factor
+         * @return
+         */
+        unsigned int getSamplingFactor() const
+        {
+            return sampling_factor;
+        }
+
+        /**
+         * @brief setSampling_factor
+         * @param value
+         */
+        void setSamplingFactor(unsigned int value)
+        {
+            sampling_factor = value;
+        }
+
     protected:
 
         std::function< double(const ExtendedState&)> f_Cost2Go;
@@ -198,6 +234,9 @@ class iQRLQR : public iLQR<xDim, uDim>
         ExtendedState radius;
         double epsilon;
         double error;
+
+        bool gaussian_sampling;
+        unsigned int sampling_factor;
 
 
 };

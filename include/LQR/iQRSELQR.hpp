@@ -172,6 +172,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
             D   = M.submat(0,0, size(xDim, xDim));
             E   = M.submat(xDim, xDim, size(uDim, uDim));
 
+
             // Linear terms
             d   = m.subvec(0, xDim - 1);
             e   = m.subvec(xDim, xDim + uDim -1);

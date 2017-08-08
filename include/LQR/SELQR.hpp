@@ -423,17 +423,16 @@ class SELQR : public BasicLQR<xDim, uDim>
                                       const double&scalar,
                                       const int t)
         {
-            mat EBarp = EBar;
-//            regularize<xDim+uDim>(EBar, 1.0e-4, 0.1);
-            this->L.at(t) = -solve(EBar, CBar);    //-(EBar.colPivHouseholderQr().solve(CBar));
-            this->l.at(t) = -solve(EBar, eBar);    //-(EBar.colPivHouseholderQr().solve(eBar));
+
+            this->L.at(t) = -solve(EBar, CBar);
+            this->l.at(t) = -solve(EBar, eBar);
 
             const int update = t+1;
 
             SBar.at(update) = DBar + CBar.t() * this->L.at(t);
             sBar.at(update) = dBar + CBar.t() * this->l.at(t);
 
-            scalar_sBar.at(update) = 0.0; //scalar - 0.5*(dot(eBar, this->l.at(t)));
+            scalar_sBar.at(update) = 0.0;
 
         }
 
@@ -455,15 +454,14 @@ class SELQR : public BasicLQR<xDim, uDim>
                                        const double&scalar,
                                        const int t)
         {
-            mat Ep = E;
-//            regularize<xDim+uDim>(E, 1.0e-4, 0.1);
-            this->L.at(t) = -solve(E, C);     //-(E.colPivHouseholderQr().solve(C));
-            this->l.at(t) = -solve(E, e);      //-(E.colPivHouseholderQr().solve(e));
+
+            this->L.at(t) = -solve(E, C);
+            this->l.at(t) = -solve(E, e);
 
             S.at(t) = D + C.t() * this->L.at(t);
             s.at(t) = d + C.t() * this->l.at(t);
 
-            scalar_s.at(t) = 0.0; //scalar - 0.5*(dot(e, this->l.at(t)));
+            scalar_s.at(t) = 0.0;
         }
 
 
