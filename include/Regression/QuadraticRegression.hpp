@@ -186,7 +186,17 @@ class QuadraticRegression
             mat::fixed<unknow, unknow> M    = (L + lambda*I);
             vec::fixed<unknow> sol;
 
-            sol = arma::solve(M, b, solve_opts::equilibrate);
+            mat R;
+            if(arma::chol(R, M))
+            {
+                // Solve the system
+                vec y   = arma::solve(trimatl(R.t()), b);
+                sol     = arma::solve(trimatu(R), y);
+            }
+            else
+            {
+                sol = arma::solve(M, b, solve_opts::equilibrate);
+            }
 
 
             // Put results on A

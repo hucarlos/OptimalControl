@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
     std::default_random_engine generator(26);
 
     ofstream out("Cords.txt", std::ofstream::out);
-    ofstream win("WinsrLQR.txt", std::ofstream::out);
+    ofstream win("WinsrLQRChol.txt", std::ofstream::out);
 
 
     unsigned int countExperiments = 100;
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
             SystemCost<XDIM, UDIM>system_cost(&control_cost, &obstacles_cost);
 
             // Same radius and epsilon for all examples
-            const double epsilon = 1.0e-2;
+            const double epsilon = 1.0e-1;
             vec::fixed<XDIM + UDIM>radius = ones<vec>(XDIM + UDIM);
             radius(0) = 1;
             radius(1) = 1;

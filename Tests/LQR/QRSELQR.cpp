@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     }
 
     ofstream out("Cords.txt", std::ofstream::out);
-    ofstream win("WinsrSELQR.txt", std::ofstream::out);
+    ofstream win("WinsrSELQRChol.txt", std::ofstream::out);
 
     State xStart, xGoal;
 

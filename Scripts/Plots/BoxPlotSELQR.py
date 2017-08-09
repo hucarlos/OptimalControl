@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
 
-    data = np.loadtxt("WinsrLQR.txt")
+    data = np.loadtxt("WinsrSELQR.txt")
     times = [data[:,0], data[:, 1]]
 
     iters = [data[:,4], data[:, 5]]
