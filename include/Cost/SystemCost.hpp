@@ -7,7 +7,7 @@
 #include <Cost/QuadraticCost.hpp>
 #include <Cost/ObstacleCost.hpp>
 
-template<uword xDim, uword uDim>
+template<uword xDim, uword uDim, uword oDim=2>
 class SystemCost : public BasicSystemCost<xDim, uDim>
 {
     public:
@@ -36,7 +36,7 @@ class SystemCost : public BasicSystemCost<xDim, uDim>
         }
 
         SystemCost(QuadraticCost<uDim>*ptr_control_cost,
-                   ObstaclesCost<xDim,2>*ptr_obstacles_cost):
+                   ObstaclesCost<xDim,oDim>*ptr_obstacles_cost):
 
               BasicSystemCost<xDim, uDim>(),
               control_cost(ptr_control_cost),
@@ -101,7 +101,7 @@ class SystemCost : public BasicSystemCost<xDim, uDim>
     protected:
 
         const QuadraticCost<uDim> *control_cost;
-        const ObstaclesCost<xDim,2> *obstacles_cost;
+        const ObstaclesCost<xDim,oDim> *obstacles_cost;
 };
 
 

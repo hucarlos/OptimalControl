@@ -340,6 +340,10 @@ class SELQR : public BasicLQR<xDim, uDim>
             ABar    = this->system->jacobianStateInvDynamics(xHatPrime, uHat);
             BBar    = this->system->jacobianControlInvDynamics(xHatPrime, uHat);
 
+            std::cout<<xHat.t()<<std::endl;
+            std::cout<<uHat.t()<<std::endl;
+            std::cout<<ABar<<std::endl;
+
             cBar    = xHat - ABar*xHatPrime - BBar*uHat;
         }
 

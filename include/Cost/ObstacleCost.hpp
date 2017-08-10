@@ -78,6 +78,11 @@ class ObstaclesCost: public Functor<xDim>
             {
                 arma::vec::fixed<obsDim>d   =  state.subvec(span(0, obsDim-1)) - obstacles.at(i).pos;
 
+                if(obstacles.at(i).dim != -1)
+                {
+                    d[obstacles.at(i).dim] = 0;
+                }
+
                 double distr    = std::sqrt(dot(d, d));
                 double dist     = distr - robot_radius_ - obstacles.at(i).radius;
                 cost            += obstacleFactor * std::exp(-scaleFactor*dist);
@@ -115,6 +120,12 @@ class ObstaclesCost: public Functor<xDim>
             for (size_t i = 0; i < obstacles.size(); ++i)
             {
                 arma::vec::fixed<obsDim> d = x.subvec(0, obsDim-1) - obstacles.at(i).pos;
+
+                if(obstacles.at(i).dim != -1)
+                {
+                    d[obstacles.at(i).dim] = 0;
+                }
+
                 double distr = std::sqrt(dot(d,d));
                 d /= distr;
                 double dist = distr - robot_radius_ - obstacles.at(i).radius;

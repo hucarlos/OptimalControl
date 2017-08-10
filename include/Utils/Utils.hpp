@@ -245,4 +245,78 @@ std::vector<std::array<T, N>> generate_rectified_hypercube()
     return vertices;
 }
 
+/**
+ * @brief operator !
+ * @param p
+ * @return
+ */
+template<uword Dim>
+mat::fixed<Dim, Dim> operator!(const mat::fixed<Dim, Dim>&p)
+{
+    const mat::fixed<Dim, Dim>m = arma::solve(p, eye<mat>(Dim, Dim));
+    return 0.5 * (m + m.t());
+}
+
+template<class Matrix>
+void print_matrix(Matrix matrix)
+{
+    matrix.print(std::cout);
+}
+
+//provide explicit instantiations of the template function for
+//every matrix type you use somewhere in your program.
+template void print_matrix<arma::mat>(arma::mat matrix);
+template void print_matrix<arma::cx_mat>(arma::cx_mat matrix);
+
+
+/**
+ * @brief skewSymmetric
+ * @param vector
+ * @return
+ */
+inline mat::fixed<3,3> skewSymmetric(const vec::fixed<3>& vector)
+{
+    mat::fixed<3,3> result = zeros<mat>(3,3);
+    result(0,1) = -vector(2);  result(0,2) =  vector(1);
+    result(1,0) =  vector(2);  result(1,2) = -vector(0);
+    result(2,0) = -vector(1);  result(2,1) =  vector(0);
+
+    return result;
+}
+
+
+// Matrix exponentiation
+#define _MATRIX_B0 1729728e1
+#define _MATRIX_B1 864864e1
+#define _MATRIX_B2 199584e1
+#define _MATRIX_B3 2772e2
+#define _MATRIX_B4 252e2
+#define _MATRIX_B5 1512e0
+#define _MATRIX_B6 56e0
+#define _MATRIX_B7 1e0
+#define _NORMLIM 9.504178996162932e-1
+
+template <uword Dim>
+inline mat::fixed<Dim, Dim> exp(const mat::fixed<Dim, Dim>& q)
+{
+    mat::fixed<Dim, Dim> A(q);
+    int s = (int) std::max(double(0), ceil(log(norm(A)/_NORMLIM)*M_LOG2E));
+
+    const mat::fixed<Dim, Dim>identity = eye<mat>(Dim,Dim);
+
+    A /= pow(2.0,s);
+    mat::fixed<Dim, Dim> A2(A*A);
+    mat::fixed<Dim, Dim> A4(A2*A2);
+    mat::fixed<Dim, Dim> A6(A2*A4);
+    mat::fixed<Dim, Dim> U( A*(A6*_MATRIX_B7 + A4*_MATRIX_B5 + A2*_MATRIX_B3 + identity*_MATRIX_B1) );
+    mat::fixed<Dim, Dim> V( A6*_MATRIX_B6 + A4*_MATRIX_B4 + A2*_MATRIX_B2 + identity*_MATRIX_B0 );
+    mat::fixed<Dim, Dim> R7 = arma::solve((V - U),(V + U));
+
+    for (int i = 0; i < s; ++i)
+    {
+        R7 = R7*R7;
+    }
+    return R7;
+}
+
 #endif // UTILS_HPP

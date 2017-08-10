@@ -18,12 +18,12 @@ class BasicSystem
         typedef arma::mat::fixed<xDim,uDim>JacobianControl;
 
     public:
-        BasicSystem(): jStep(0.0009765625)
+        BasicSystem(const double&delta_t): dt(delta_t), jStep(0.0009765625)
         {
 
         }
 
-        BasicSystem(const double&steapsize): jStep(steapsize)
+        BasicSystem(const double&delta_t, const double&steapsize): dt(delta_t) ,jStep(steapsize)
         {
 
         }
@@ -40,20 +40,45 @@ class BasicSystem
         }
 
         /**
-         * @brief move
+         * @brief continuos_move
          * @param x
          * @param u
          * @return
          */
-        virtual State move(const State &x, const Control&u) const = 0;
+        virtual State continuos_move(const State&x, const Control&u) const = 0;
 
         /**
-         * @brief inverse_dynamics
+         * @brief move Discrete-time dynamics x_{t+1} = g(x_t, u_t)
          * @param x
          * @param u
          * @return
          */
-        virtual State inverse_dynamics(const State &x, const Control&u) const = 0;
+        inline State move(const State& x, const Control& u) const
+        {
+                State k1  = continuos_move(x, u);
+                State k2  = continuos_move(x + 0.5*dt*k1, u);
+                State k3  = continuos_move(x + 0.5*dt*k2, u);
+                State k4  = continuos_move(x + dt*k3, u);
+
+                return x + (dt/6.0)*(k1 + 2.0*k2 + 2.0*k3 + k4);
+        }
+
+        /**
+         * @brief Discrete-time inverse dynamics x_t = \bar{g}(x_{t+1}, u_t)
+         * @param x
+         * @param u
+         * @return
+         */
+
+        inline State inverse_dynamics(const State& x, const Control& u) const
+        {
+                State k1 = continuos_move(x, u);
+                State k2 = continuos_move(x - 0.5*dt*k1, u);
+                State k3 = continuos_move(x - 0.5*dt*k2, u);
+                State k4 = continuos_move(x - dt*k3, u);
+
+                return x - (dt/6.0)*(k1 + 2.0*k2 + 2.0*k3 + k4);
+        }
 
 
         /**
@@ -102,6 +127,12 @@ class BasicSystem
             return B;
         }
 
+        /**
+         * @brief jacobianStateInvDynamics
+         * @param state
+         * @param control
+         * @return
+         */
         virtual JacobianState jacobianStateInvDynamics(const State&state, const Control&control) const
         {
             JacobianState A;
@@ -120,6 +151,12 @@ class BasicSystem
             return A;
         }
 
+        /**
+         * @brief jacobianControlInvDynamics
+         * @param state
+         * @param control
+         * @return
+         */
         virtual JacobianControl jacobianControlInvDynamics(const State&state, const Control&control) const
         {
             JacobianControl B;
@@ -137,6 +174,7 @@ class BasicSystem
         }
 
     private:
+        const double dt;
         const double jStep;
 };
 

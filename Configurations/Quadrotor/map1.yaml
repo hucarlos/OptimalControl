@@ -1,0 +1,66 @@
+
+bottomLeft:
+  position: [-3.0, -3.0, -3.0]
+
+topRight:
+  position: [3.0, 3.0, 3.0]
+
+Obstacle1:
+  position: [-1.25, 1.25, 0.0]
+  radius: 0.4
+  dim: 2
+
+Obstacle2:
+  position: [1.25, 1.25, 0.0]
+  radius: 0.4
+  dim: 2
+
+Obstacle3:
+  position: [1.25, -1.25, 0.0]
+  radius: 0.4
+  dim: 2
+
+Obstacle4:
+  position: [-1.25, -1.25, 0.0]
+  radius: 0.4
+  dim: 2
+
+Obstacle5:
+  position: [-1.25, 0.0, 1.25]
+  radius: 0.4
+  dim: 1
+
+Obstacle6:
+  position: [1.25, 0.0, 1.25]
+  radius: 0.4
+  dim: 1
+
+Obstacle7:
+  position: [1.25, 0.0, -1.25]
+  radius: 0.4
+  dim: 1
+
+Obstacle8:
+  position: [-1.25, 0.0, -1.25]
+  radius: 0.4
+  dim: 1
+
+Obstacle9:
+  position: [0.0, -1.25, 1.25]
+  radius: 0.4
+  dim: 0
+
+Obstacle10:
+  position: [0.0, 1.25, 1.25]
+  radius: 0.4
+  dim: 0
+
+Obstacle11:
+  position: [0.0, 1.25, -1.25]
+  radius: 0.4
+  dim: 0
+
+Obstacle12:
+  position: [0.0, -1.25, -1.25]
+  radius: 0.4
+  dim: 0

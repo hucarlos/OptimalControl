@@ -17,7 +17,7 @@ class Obstacle
         /**
          * @brief Obstacle
          */
-        Obstacle(): dim(obsDim)
+        Obstacle(): dim(-1)
         {
             pos.zeros();
             radius  = 1.0;
@@ -36,7 +36,7 @@ class Obstacle
          * @brief getDim
          * @return
          */
-        size_t getDim() const
+        int Dim() const
         {
             return dim;
         }
@@ -58,7 +58,7 @@ class Obstacle
      */
         double x() const
         {
-            return pos[0];
+            return pos(0);
         }
 
         /**
@@ -67,16 +67,29 @@ class Obstacle
      */
         double y() const
         {
-            return pos[1];
+            return pos(1);
         }
 
+        /**
+         * @brief z
+         * @return
+         */
+        double z() const
+        {
+            return pos(2);
+        }
+
+        /**
+         * @brief getRadius
+         * @return
+         */
         double getRadius() const
         {
             return radius;
         }
 
     public:
-        size_t dim;
+        int  dim;
         arma::vec::fixed<obsDim> pos;
         double radius;
 };
@@ -92,8 +105,8 @@ class Obstacle
 template<int obsDim>
 void loadMapYAML(const std::string&filename,
                  std::vector< Obstacle<obsDim> >&obstacles,
-                 arma::vec2&bottomLeft,
-                 arma::vec2&topRight)
+                 vec::fixed<obsDim>&bottomLeft,
+                 vec::fixed<obsDim>&topRight)
 {
     obstacles.clear();
 
@@ -129,14 +142,20 @@ void loadMapYAML(const std::string&filename,
 
                         if(str_key == "bottomLeft")
                         {
-                            bottomLeft(0)   = childValue[0].as<double>();
-                            bottomLeft(1)   = childValue[1].as<double>();
+                            for(unsigned int i=0; i<obsDim; i++)
+                            {
+                                bottomLeft(i)   = childValue[i].as<double>();
+                            }
+
                         }
 
                         else if(str_key == "topRight")
                         {
-                            topRight(0)   = childValue[0].as<double>();
-                            topRight(1)   = childValue[1].as<double>();
+                            for(unsigned int i=0; i<obsDim; i++)
+                            {
+                                topRight(i)   = childValue[i].as<double>();
+                            }
+
                         }
 
                         else
@@ -145,14 +164,22 @@ void loadMapYAML(const std::string&filename,
                             if(childKey.as<std::string>() == "position")
                             {
 
-                                obstacle.pos(0) = childValue[0].as<double>();
-                                obstacle.pos(1) = childValue[1].as<double>();
+                                for(unsigned int i=0; i<obsDim; i++)
+                                {
+                                    obstacle.pos(i) = childValue[i].as<double>();
+                                }
 
                             }
 
                             else if (childKey.as<std::string>() == "radius")
                             {
                                 obstacle.radius = childValue.as<double>();
+
+                            }
+
+                            else if (childKey.as<std::string>() == "dim")
+                            {
+                                obstacle.dim = childValue.as<double>();
 
                             }
 
