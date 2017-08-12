@@ -5,6 +5,8 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip> 
+
 #include <vector>
 #include <chrono>
 #include <utility>
@@ -18,6 +20,51 @@ typedef std::chrono::high_resolution_clock::time_point TimeVar;
 
 #define duration(a) std::chrono::duration_cast<std::chrono::milliseconds>(a).count()
 #define timeNow() std::chrono::high_resolution_clock::now()
+
+/**
+ * @brief regularize
+ * @param Q
+ * @param epsilon
+ */
+template <uword aDim>
+void regularize(mat &Q, const double&epsilon)
+{
+
+
+    try
+    {
+        // Use eigen solver
+        vec eigval;
+        mat eigvec;
+
+        if( eig_sym(eigval, eigvec, Q, "std"))
+        {
+            for (unsigned int i = 0; i < aDim; ++i)
+            {
+
+                if (eigval(i) < 0.0)
+                {
+                    eigval(i) = epsilon;
+                }
+
+                arma::mat D(aDim, aDim, fill::zeros);
+                D.diag() = eigval;
+
+                Q = eigvec * D * eigvec.t();
+            }
+        }
+
+        else
+        {
+            throw(std::logic_error("Not eigen decomposition"));
+        }
+
+    }
+    catch(std::logic_error&e)
+    {
+        throw std::logic_error(e.what());
+    }
+}
 
 /**
  * @brief regularize
@@ -205,44 +252,37 @@ double funcTime(F&func,  Args&&... args)
 }
 
 
-#include <array>
-#include <vector>
-#include <algorithm>
-
-template <typename T, size_t N>
 /**
- * @brief generate_rectified_hypercube
- * @return
+ From debugger print matrix
+ 
+ @param mat&in input matrix
  */
-std::vector<std::array<T, N>> generate_rectified_hypercube()
+inline void print_matrix(const mat&in)
 {
-    std::vector<std::array<T, N>> vertices;  // result data
-    std::array<T, N> set; // set to permute upon
-    // Initialize set to { 0, 1, ..., 1 }
-    set[0] = T(0);
-    for (size_t i = 1; i < N; ++i) set[i] = T(1);
-
-    // Generate vertices
-
-    // Add all possible permutations of initial set (unrolled loop for i=0)
-    do {
-        vertices.push_back(set);
-    } while (std::next_permutation(set.begin(), set.end()));
-
-    for (size_t i = 1; i < N; ++i) { // do the rest of them
-
-        // Modify set to be seed for next group of permutations:
-        // "abusing" the known state after last std::next_permutation call
-        set[i-1] = T(-1);    // Here was zero previously
-        set[i] = T(0);       // Here was first 1
-
-        // Add all possible permutations of current set
-        do {
-            vertices.push_back(set);
-        } while (std::next_permutation(set.begin(), set.end()));
-
+    for(int i=0; i<in.n_rows; i++)
+    {
+        for(int j=0; j<in.n_cols; j++)
+            std::cout << std::left << std::setw(13) << in(i,j) << " ";
     }
-    return vertices;
+    std::cout << std::endl << std::endl;
+    
+}
+
+
+/**
+ Debbuger print vector
+ 
+ @param vec&in input vector
+ */
+inline void print_vector(const vec&in)
+{
+    for(int i=0; i<in.n_elem; i++)
+    {
+        std::cout << std::left << std::setw(13) << in(i) << " ";
+    }
+    std::cout << std::endl << std::endl;
+    
+    
 }
 
 /**
@@ -256,17 +296,6 @@ mat::fixed<Dim, Dim> operator!(const mat::fixed<Dim, Dim>&p)
     const mat::fixed<Dim, Dim>m = arma::solve(p, eye<mat>(Dim, Dim));
     return 0.5 * (m + m.t());
 }
-
-template<class Matrix>
-void print_matrix(Matrix matrix)
-{
-    matrix.print(std::cout);
-}
-
-//provide explicit instantiations of the template function for
-//every matrix type you use somewhere in your program.
-template void print_matrix<arma::mat>(arma::mat matrix);
-template void print_matrix<arma::cx_mat>(arma::cx_mat matrix);
 
 
 /**
@@ -318,5 +347,8 @@ inline mat::fixed<Dim, Dim> exp(const mat::fixed<Dim, Dim>& q)
     }
     return R7;
 }
+
+
+
 
 #endif // UTILS_HPP

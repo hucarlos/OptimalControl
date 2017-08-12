@@ -6,7 +6,8 @@
 #include <LQR/iQRLQR.hpp>
 #include <LQR/iQRSELQR.hpp>
 
-#include<Utils/SystemParameters.hpp>
+#include <Utils/SystemParameters.hpp>
+#include <Cost/QuadObstacleCost.hpp>
 
 using namespace std;
 
@@ -28,16 +29,15 @@ typedef arma::mat::fixed<XDIM + UDIM, 1>ExtenedState;
 
 typedef arma::mat::fixed<UDIM, XDIM>ControlStateMatrix;
 
-//provide explicit instantiations of the template function for
-//every matrix type you use somewhere in your program.
-template void print_matrix<arma::mat>(arma::mat matrix);
-template void print_matrix<arma::cx_mat>(arma::cx_mat matrix);
+
+
+
 
 int main(int argc, char *argv[])
 {
     TimeVar t1;
 
-    Quadrotor robot(1.0/2.0);
+    Quadrotor robot(1.0/20.0);
 
 
     const unsigned int ell      = 150;
@@ -58,8 +58,7 @@ int main(int argc, char *argv[])
     xGoal(((random / 4) + 2) % 3)   = ((random % 4) % 2 == 0 ? 2.25 : -2.25) + ((double) rand() / RAND_MAX) * 0.02 - 0.01;
 
     xStart = -xGoal;
-
-
+    
     const ControlMat R          = 20  * eye<mat>(UDIM, UDIM);
     const StateMat Q            = 500 * eye<mat>(XDIM, XDIM);
 
@@ -68,12 +67,12 @@ int main(int argc, char *argv[])
 
     uNominal[0] = uNominal[1] = uNominal[2] = uNominal[3] = robot.getGravity() * robot.getMass()/4;
 
-    State result = robot.move(xStart, uNominal);
+//    State result = robot.move(xStart, uNominal);
 
 
     const double obstacleFactor = 1.0;
     const double scaleFactor    = 10.0;
-    const double robotRadius    = 0.3429/2 + 1.0;
+    const double robotRadius    = 0.3429/2 + 0.1;
 
     const string mapfile        = "Map1.yaml";
 
@@ -88,7 +87,7 @@ int main(int argc, char *argv[])
     std::vector<Obstacle<ODIM> >obstacles;
     loadMapYAML(mapfile, obstacles, bottomLeft, topRight);
 
-    ObstaclesCost<XDIM, ODIM>obstacles_cost(robotRadius, obstacles);
+    QuadObstacleCost<XDIM, ODIM>obstacles_cost(robotRadius, obstacles);
 
     obstacles_cost.setTopRight(topRight);
     obstacles_cost.setBottomLeft(bottomLeft);

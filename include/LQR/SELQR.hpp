@@ -109,6 +109,10 @@ class SELQR : public BasicLQR<xDim, uDim>
                         const int update = t+1;
                         estimateNominalState(update, xHat);
 
+//                        print_vector(xHat);
+//
+//                        int ggg = 0;
+
                     }
 
                     // ================================ BACKWARD PASS ========================================
@@ -340,10 +344,6 @@ class SELQR : public BasicLQR<xDim, uDim>
             ABar    = this->system->jacobianStateInvDynamics(xHatPrime, uHat);
             BBar    = this->system->jacobianControlInvDynamics(xHatPrime, uHat);
 
-            std::cout<<xHat.t()<<std::endl;
-            std::cout<<uHat.t()<<std::endl;
-            std::cout<<ABar<<std::endl;
-
             cBar    = xHat - ABar*xHatPrime - BBar*uHat;
         }
 
@@ -399,6 +399,8 @@ class SELQR : public BasicLQR<xDim, uDim>
             P = zeros<mat>(uDim, xDim);
 
             this->systemCost->quadratize(xHat, uHat, Q, R, P, q, r);
+
+
 
             double unused = 0.0;
 
@@ -479,7 +481,7 @@ class SELQR : public BasicLQR<xDim, uDim>
             StateMatrix SS    = S.at(t) + SBar.at(t);
             State ss          = s.at(t) + sBar.at(t);
 
-            regularize<xDim>(SS, 1.0e-3, 0.1);
+//            regularize<xDim>(SS, 1.0e-3, 0.1);
             xHat = - solve(SS, ss);
 
         }
