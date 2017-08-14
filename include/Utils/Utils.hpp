@@ -97,7 +97,7 @@ void regularize(mat &Q, const double&epsilon, const double&factor)
 
                 if (eigval(i) < epsilon)
                 {
-                    eigval(i) = max;
+                    eigval(i) = factor;
                 }
 
                 arma::mat D(aDim, aDim, fill::zeros);
@@ -262,7 +262,10 @@ inline void print_matrix(const mat&in)
     for(int i=0; i<in.n_rows; i++)
     {
         for(int j=0; j<in.n_cols; j++)
-            std::cout << std::left << std::setw(13) << in(i,j) << " ";
+        {
+            std::cout << std::left << std::setw(9) << in(i,j) << " ";
+        }
+        std::cout << std::endl;
     }
     std::cout << std::endl << std::endl;
     
@@ -348,6 +351,18 @@ inline mat::fixed<Dim, Dim> exp(const mat::fixed<Dim, Dim>& q)
     return R7;
 }
 
+
+template<uword Dim>
+inline void vec2DiagMat(const vec::fixed<Dim>&in, mat::fixed<Dim, Dim>&out)
+{
+    for(unsigned int i=0; i<Dim; i++)
+    {
+        for(unsigned int j=0; j<Dim; j++)
+        {
+            out(i,j) = (i==j)?(in(i)):(0.0);
+        }
+    }
+}
 
 
 

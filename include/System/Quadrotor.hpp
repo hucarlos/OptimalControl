@@ -37,38 +37,46 @@ class Quadrotor: public BasicSystem<12,4>
          */
         inline State continuos_move(const State&x, const Control&u) const
         {
-            State xDot = zeros<vec>(12);
-
-            vec::fixed<3> p = x.subvec(0, 2);
-            vec::fixed<3> v = x.subvec(3, 5);
-            vec::fixed<3> r = x.subvec(6, 8);
-            vec::fixed<3> w = x.subvec(9, 11);
-
-            // \dot{p} = v
-            xDot.subvec(0,2) = v;
-
-            // \dot{v} = [0,0,-g]^T + R*exp([r])*[0,0,(f_1 + f_2 + f_3 + f_4) / m]^T;
-            vec::fixed<3>temp = -gravity*eZ + arma::expmat(skewSymmetric(r)) * ((u[0]+u[1]+u[2]+u[3])/mass)*eZ - dragConst*v/mass;
-            xDot.subvec(3, 5) = temp;
-
-            // \dot{r} = w + 0.5*skewSymmetric(r)*w + (1.0/tr(~r*r))*(1.0 - 0.5*sqrt(tr(~r*r))/tan(0.5*sqrt(tr(~r*r))))*skewSymmetric(r)*(skewSymmetric(r)*w)
-            double l = std::sqrt(r[0]*r[0]+r[1]*r[1]+r[2]*r[2]);
-            if (0.5*l > 0.0)
+            
+            try
             {
-                xDot.subvec(6, 8) =  w + 0.5*skewSymmetric(r)*w
-                                       + (1.0 - 0.5*l/std::tan(0.5*l))*skewSymmetric(r / l)*(skewSymmetric(r / l)*w);
+                State xDot = zeros<vec>(12);
+
+                vec::fixed<3> p = x.subvec(0, 2);
+                vec::fixed<3> v = x.subvec(3, 5);
+                vec::fixed<3> r = x.subvec(6, 8);
+                vec::fixed<3> w = x.subvec(9, 11);
+
+                // \dot{p} = v
+                xDot.subvec(0,2) = v;
+
+                // \dot{v} = [0,0,-g]^T + R*exp([r])*[0,0,(f_1 + f_2 + f_3 + f_4) / m]^T;
+                vec::fixed<3>temp = -gravity*eZ + arma::expmat(skewSymmetric(r)) * ((u[0]+u[1]+u[2]+u[3])/mass)*eZ - dragConst*v/mass;
+                xDot.subvec(3, 5) = temp;
+
+                // \dot{r} = w + 0.5*skewSymmetric(r)*w + (1.0/tr(~r*r))*(1.0 - 0.5*sqrt(tr(~r*r))/tan(0.5*sqrt(tr(~r*r))))*skewSymmetric(r)*(skewSymmetric(r)*w)
+                double l = std::sqrt(r[0]*r[0]+r[1]*r[1]+r[2]*r[2]);
+                if (0.5*l > 0.0)
+                {
+                    xDot.subvec(6, 8) =  w + 0.5*skewSymmetric(r)*w
+                                           + (1.0 - 0.5*l/std::tan(0.5*l))*skewSymmetric(r / l)*(skewSymmetric(r / l)*w);
+                }
+                else
+                {
+                    xDot.subvec(6, 8) =  w;
+                }
+
+                // \dot{w} = J^{-1}*([l*(f_2 - f_4), l*(f_3 - f_1), (f_1 - f_2 + f_3 - f_4)*k_M]^T - [w]*J*w)
+                xDot.subvec(9, 11) = invInertia*( length*(u[1] - u[3])*eX + length*(u[2] - u[0])*eY
+                                     + (u[0] - u[1] + u[2] - u[3])*momentConst*eZ
+                                     - skewSymmetric(w)*inertia*w);
+
+                return xDot;
             }
-            else
+            catch(std::runtime_error&e)
             {
-                xDot.subvec(6, 8) =  w;
+                throw (e);
             }
-
-            // \dot{w} = J^{-1}*([l*(f_2 - f_4), l*(f_3 - f_1), (f_1 - f_2 + f_3 - f_4)*k_M]^T - [w]*J*w)
-            xDot.subvec(9, 11) = invInertia*( length*(u[1] - u[3])*eX + length*(u[2] - u[0])*eY
-                                 + (u[0] - u[1] + u[2] - u[3])*momentConst*eZ
-                                 - skewSymmetric(w)*inertia*w);
-
-            return xDot;
         }
 
         /**

@@ -25,7 +25,7 @@ typedef arma::vec::fixed<UDIM>Control;
 typedef arma::mat::fixed<XDIM, XDIM>StateMat;
 typedef arma::mat::fixed<UDIM, UDIM>ControlMat;
 
-typedef arma::mat::fixed<XDIM + UDIM, 1>ExtenedState;
+typedef arma::vec::fixed<XDIM + UDIM>ExtenedState;
 
 typedef arma::mat::fixed<UDIM, XDIM>ControlStateMatrix;
 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     State xGoal           = zeros<mat>(XDIM);
 
     // Run iLQR and Extended LQR
-    time_t seed = 1372474623; //time_t seed = time(0);
+    time_t seed = 22;//1372474623; //time_t seed = time(0);
     srand(seed);
 
     xGoal = zeros<vec>(XDIM);
@@ -66,8 +66,6 @@ int main(int argc, char *argv[])
     Control uNominal      = zeros<vec>(UDIM);
 
     uNominal[0] = uNominal[1] = uNominal[2] = uNominal[3] = robot.getGravity() * robot.getMass()/4;
-
-//    State result = robot.move(xStart, uNominal);
 
 
     const double obstacleFactor = 1.0;
@@ -105,31 +103,47 @@ int main(int argc, char *argv[])
     QuadraticCost<UDIM>control_cost(uNominal, R);
 
     SystemCost<XDIM, UDIM, ODIM>system_cost(&control_cost, &obstacles_cost);
-
+    
+    ExtenedState initRadius;
+    initRadius.subvec(0, 2)     = 1.0e-6  * ones<vec>(3);
+    initRadius.subvec(3, 5)     = 1.0e-6  * ones<vec>(3);
+    initRadius.subvec(6, 8)     = 1.0e-6  * ones<vec>(3);
+    initRadius.subvec(9, 11)    = 1.0e-6  * ones<vec>(3);
+    initRadius.subvec(12, 15)   = 1.0e-6  * ones<vec>(4);
+    
+    double epsilon      = 1.0e-2;
+    
+   
     // ========================================= SELQR ALGORITHMS =============================
 
     SELQR<XDIM, UDIM>selqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
+
     t1=timeNow();
     selqr.estimate(xStart, max_iter, delta, lNominal);
     std::cout<<"SELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl<<endl;
 
-//    filename = selqr.getName() + ext;
-//    selqr.estimatePath(xStart);
+    filename = selqr.getName() + ext;
+    selqr.estimatePath(xStart);
 
-//    selqr.getNominalState(systemPath);
-//    selqr.getNominalControl(nominalControls);
+    selqr.getNominalState(systemPath);
+    selqr.getNominalControl(nominalControls);
 
-//    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
     // ========================================= iQRLQR ALGORITHMS =============================
 
-//    iQRLQR<XDIM, UDIM>iqrlqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
-//    iqrlqr.setInitRadius(params.iQRLQR.initRadius);
-//    iqrlqr.setEpsilon(params.iQRLQR.epsilon);
-
+    iQRLQR<XDIM, UDIM>iqrlqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
+   
 //    t1=timeNow();
 //    iqrlqr.estimate(xStart, max_iter, delta, lNominal);
 //    std::cout<<"iQRLQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl;
+    
+//    iqrlqr.setInitRadius(initRadius);
+//    iqrlqr.setEpsilon(epsilon);
+//    iqrlqr.setGaussiaSampling(true);
+//    iqrlqr.setSamplingFactor(2);
+    
+
 
 //    filename = iqrlqr.getName() + ext;
 //    iqrlqr.estimatePath(xStart);
@@ -142,21 +156,25 @@ int main(int argc, char *argv[])
 
     // ========================================= iQRSELQR ALGORITHMS =============================
 
-//    iQRSELQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
-//    qrselqr.setInitRadius(params.iQRSELQR.initRadius);
-//    qrselqr.setEpsilon(params.iQRSELQR.epsilon);
+    iQRSELQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
 
-//    t1=timeNow();
-//    qrselqr.estimate(xStart, max_iter, delta, lNominal);
-//    std::cout<<"iQRSELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl;
+    
+    qrselqr.setInitRadius(initRadius);
+    qrselqr.setEpsilon(epsilon);
+    qrselqr.setGaussiaSampling(true);
+    qrselqr.setSamplingFactor(4);
+    
+    t1=timeNow();
+    qrselqr.estimate(xStart, max_iter, delta, lNominal);
+    std::cout<<"iQRSELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl;
 
-//    filename = qrselqr.getName() + ext;
-//    std::cout<<"Final cost: "<<qrselqr.estimatePath(xStart)<<endl;
+    filename = qrselqr.getName() + ext;
+    std::cout<<"Final cost: "<<qrselqr.estimatePath(xStart)<<endl;
 
-//    qrselqr.getNominalState(systemPath);
-//    qrselqr.getNominalControl(nominalControls);
+    qrselqr.getNominalState(systemPath);
+    qrselqr.getNominalControl(nominalControls);
 
-//    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
 
 

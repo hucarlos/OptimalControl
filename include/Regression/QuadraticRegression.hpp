@@ -12,12 +12,12 @@
 using namespace std;
 using namespace arma;
 
-template<uword xDim>
+template<uword Dim>
 class QuadraticRegression
 {
     public:
-        typedef arma::vec::fixed<xDim>Inputs;
-        typedef arma::mat::fixed<xDim, xDim>InputsMat;
+        typedef arma::vec::fixed<Dim>Inputs;
+        typedef arma::mat::fixed<Dim, Dim>InputsMat;
 
         QuadraticRegression(): gaussian_sampling(true), samples_factor(1), seed(1)
         {
@@ -49,7 +49,7 @@ class QuadraticRegression
          * @param A
          * @param a
          * @param scalar
-         * @param covar
+         * @param radius
          * @param lambda
          * @return
          */
@@ -62,18 +62,20 @@ class QuadraticRegression
                              const double&lambda=0.0)
         {
 
-            const unsigned int unknow           = ((xDim * (xDim+1))/2) + xDim;
+            const unsigned int unknow           = ((Dim * (Dim+1))/2) + Dim;
             const unsigned int samples_gaussian = samples_factor * unknow;
 
             arma::mat samples;
 
-            InputsMat cov   = zeros<mat>(xDim, xDim);
-            cov.diag()      = radius;
+            InputsMat cov;
+
+            vec2DiagMat(radius, cov);
+
 
             if(gaussian_sampling)
             {
 
-                samples = mat(xDim, samples_gaussian, fill::zeros);
+                samples = mat(Dim, samples_gaussian, fill::zeros);
                 const int ncols = cov.n_cols;
                 arma_rng::set_seed(seed);
                 arma::mat Y     = arma::randn(samples_gaussian, ncols);
@@ -83,16 +85,16 @@ class QuadraticRegression
             {
 
                 Inputs startRadius = radius;
-                const int count_points   = std::ceil((xDim + 3)/8) + 1;
-                const int samples4Sigma  =  (1 << xDim) + 2*xDim;
+                const int count_points   = std::ceil((Dim + 3)/8) + 1;
+                const int samples4Sigma  =  (1 << Dim) + 2*Dim;
 
                 const int count_samples  = samples_factor * count_points;
 
                 arma::mat points;
 
-                samples = mat(xDim, samples4Sigma*count_samples, fill::zeros);
+                samples = mat(Dim, samples4Sigma*count_samples, fill::zeros);
 
-                SigmaPoints<xDim>sPoints;
+                SigmaPoints<Dim>sPoints;
 
                 for(int i=0; i<count_samples; i++)
                 {
@@ -100,7 +102,7 @@ class QuadraticRegression
 
                     sPoints.estimate(mean, radius, points);
 
-                    samples.submat(0, i*samples4Sigma, size(xDim, samples4Sigma)) = points.submat(0,1,size(xDim, samples4Sigma));
+                    samples.submat(0, i*samples4Sigma, size(Dim, samples4Sigma)) = points.submat(0,1,size(Dim, samples4Sigma));
 
                     startRadius *= 0.5;
                 }
@@ -130,7 +132,7 @@ class QuadraticRegression
                              const double&alpha=0.01,
                              const double&lambda=0.0)
         {
-            Inputs radius = alpha * ones<vec>(xDim);
+            Inputs radius = alpha * ones<vec>(Dim);
             return this->getRegression(cost, mean, A, a, scalar, radius, lambda);
         }
 
@@ -156,8 +158,8 @@ class QuadraticRegression
         {
 
 
-            const int mat_unknow    = (xDim*(xDim + 1)/2);
-            const int unknow        =  mat_unknow + xDim;
+            const int mat_unknow    = (Dim*(Dim + 1)/2);
+            const int unknow        =  mat_unknow + Dim;
 
             if(unknow <= 0)
             {
@@ -200,9 +202,9 @@ class QuadraticRegression
 
 
             // Put results on A
-            for(unsigned int i=0, p=0; i<xDim; i++)
+            for(unsigned int i=0, p=0; i<Dim; i++)
             {
-                for(unsigned int j=i; j<xDim; j++, p++)
+                for(unsigned int j=i; j<Dim; j++, p++)
                 {
                     A(i,j) = A(j,i) = sol(p);
                 }
@@ -284,9 +286,9 @@ class QuadraticRegression
 
                 // Cicle for all the matrix values
                 int p = 0;
-                for(unsigned int r=0; r<xDim; r++)
+                for(unsigned int r=0; r<Dim; r++)
                 {
-                    for(unsigned int c=r; c<xDim; c++, p++)
+                    for(unsigned int c=r; c<Dim; c++, p++)
                     {
                         X(i,p)  = diff(r)*diff(c);
 
@@ -299,7 +301,7 @@ class QuadraticRegression
                     }
                 }
 
-                for(int r=0; r<xDim; r++, p++)
+                for(int r=0; r<Dim; r++, p++)
                 {
                     X(i,p) = diff(r);
                 }
@@ -335,9 +337,9 @@ class QuadraticRegression
 
                     // Cicle for all the matrix values
                     int p = 0;
-                    for(unsigned int r=0; r<xDim; r++)
+                    for(unsigned int r=0; r<Dim; r++)
                     {
-                        for(unsigned int c=r; c<xDim; c++, p++)
+                        for(unsigned int c=r; c<Dim; c++, p++)
                         {
                             X(i,p)  = diff(r)*diff(c);
 
@@ -350,7 +352,7 @@ class QuadraticRegression
                         }
                     }
 
-                    for(int r=0; r<xDim; r++, p++)
+                    for(int r=0; r<Dim; r++, p++)
                     {
                         X(i,p) = diff(r);
                     }

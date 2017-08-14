@@ -142,11 +142,14 @@ class BasicLQR
 
         void printProgress()
         {
-            std::cout.precision(5);
-
-            std::cout <<"Iter: "        <<std::setw(5) <<std::scientific << std::setprecision(7) << iterations() <<"  ";
-            std::cout <<"Progress: "    <<std::setw(17)<<std::scientific << std::setprecision(7) << getProgress()<<"  ";
-            std::cout <<"Cost: "        <<std::setw(17)<<std::scientific << std::setprecision(7) << getAccum()  <<endl;
+            std::cout <<"Iter: "        << std::left << std::setw(8)  << std::setprecision(7) << iterations() <<"  ";
+            std::cout <<"Progress: "    << std::left << std::setw(15) << std::setprecision(7) << getProgress() <<"  ";
+            std::cout <<"Cost: "        << std::left << std::setw(15) << std::setprecision(7) << getAccum()  <<endl;
+        }
+    
+        virtual void  printConfiguration()
+        {
+            
         }
 
         /**

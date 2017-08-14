@@ -184,7 +184,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
         void checkM(ExtendedStateMatrix&M)
         {
 
-            const double min = 1.0e-4;
+            const double min = 0.0;
             const double fac = 0.1;
 
             toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
@@ -213,7 +213,9 @@ class iQRSELQR : public SELQR<xDim, uDim>
             epsilon *= 0.1;
             estimateEpsilon();
 
-            initRadius *=0.5;
+            initRadius *= 0.5;
+            
+           
 
             this->reset(nominalU);
         }
@@ -337,17 +339,24 @@ class iQRSELQR : public SELQR<xDim, uDim>
         void decreceRadius(ExtendedState&radius)
         {
 
-            for(unsigned int r=0; r<(xDim + uDim); r++)
-            {
-                if(r == 2)
-                {
-                    radius(r) *= 0.1;
-                }
-                else
-                {
-                    radius(r) *= 0.95;
-                }
-            }
+//            for(unsigned int r=0; r<(xDim + uDim); r++)
+//            {
+//                if(r == 2)
+//                {
+//                    radius(r) *= 0.1;
+//                }
+//                else
+//                {
+//                    radius(r) *= 0.95;
+//                }
+//            }
+            
+            
+            radius.subvec(0, 2)     *= 0.9;
+            radius.subvec(3, 5)     *= 0.9;
+            radius.subvec(6, 8)     *= 0.9;
+            radius.subvec(9, 11)    *= 0.9;
+            radius.subvec(12, 15)   *= 0.9;
         }
 
 
@@ -356,10 +365,10 @@ class iQRSELQR : public SELQR<xDim, uDim>
          */
         void printConfiguration()
         {
-            this->log
-                    <<this->iter    <<' '   << this->accumCost      << ' '
-                   <<error         <<' '   << radius.transpose()   << ' '
-                  <<std::endl;
+            std::cout   << this->iterations()   <<' '   << this->accum      << ' '
+                        << this->epsilon        <<' '
+                        << error                <<' '   << initRadius.t()   << ' '
+                        <<std::endl;
         }
 
 

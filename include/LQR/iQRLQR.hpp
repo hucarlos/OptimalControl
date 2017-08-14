@@ -36,7 +36,9 @@ class iQRLQR : public iLQR<xDim, uDim>
                              ptr_system_cost,
                              ptr_final_cost,
                              VIS,
-                             name)
+                             name),
+            gaussian_sampling(false),
+            sampling_factor(2.0)
         {
             f_Cost2Go = std::bind(&iQRLQR::cost2Go, this, std::placeholders::_1);
 
@@ -130,17 +132,23 @@ class iQRLQR : public iLQR<xDim, uDim>
         void decreceRadius(ExtendedState&radius)
         {
 
-            for(unsigned int r=0; r<(xDim + uDim); r++)
-            {
-                if(r == 2)
-                {
-                    radius(r) *= 0.1;
-                }
-                else
-                {
-                    radius(r) *= 0.5;
-                }
-            }
+//            for(unsigned int  r=0; r<(xDim + uDim); r++)
+//            {
+//                if(r == 2)
+//                {
+//                    radius(r) *= 0.1;
+//                }
+//                else
+//                {
+//                    radius(r) *= 0.5;
+//                }
+//            }
+
+            radius.subvec(0, 2)     *= 0.5;
+            radius.subvec(3, 5)     *= 0.5;
+            radius.subvec(6, 8)     *= 0.5;
+            radius.subvec(9, 11)    *= 0.5;
+            radius.subvec(12, 15)   *= 0.5;
         }
 
 

@@ -167,7 +167,7 @@ class ObstaclesCost: public Functor<xDim>
                 qObs += a1*d;
             }
 
-            regularize<obsDim>(QObs, 0.0, 0.1);
+            regularize<obsDim>(QObs, 0.1);
             Q.submat(0,0,obsDim-1, obsDim-1)    += QObs;
             q.subvec(0,obsDim-1)                += qObs - QObs * x.subvec(0,obsDim-1);
 

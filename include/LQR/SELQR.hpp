@@ -109,9 +109,6 @@ class SELQR : public BasicLQR<xDim, uDim>
                         const int update = t+1;
                         estimateNominalState(update, xHat);
 
-//                        print_vector(xHat);
-//
-//                        int ggg = 0;
 
                     }
 
@@ -183,7 +180,7 @@ class SELQR : public BasicLQR<xDim, uDim>
                     setParameters();
 
                     // If something goes wrong try to start again
-                    if(std::isnan(this->getAccum()) || (!isfinite(this->getAccum())) /*|| (this->getProgress() == -1.0)*/)
+                    if(std::isnan(this->getAccum()) || (!isfinite(this->getAccum())) )
                     {
                         newCost  = 0.0;
                         oldCost  = -std::log(0.0);
@@ -193,8 +190,10 @@ class SELQR : public BasicLQR<xDim, uDim>
                         setInitialConditions(nominalU);
                     }
                 }
-                catch(std::logic_error&e)
+                catch(std::exception&e)
                 {
+                    
+                    this->printConfiguration();
                     newCost  = 0.0;
                     oldCost  = -std::log(0.0);
 
@@ -481,7 +480,7 @@ class SELQR : public BasicLQR<xDim, uDim>
             StateMatrix SS    = S.at(t) + SBar.at(t);
             State ss          = s.at(t) + sBar.at(t);
 
-//            regularize<xDim>(SS, 1.0e-3, 0.1);
+//            regularize<xDim>(SS, 1.0e-3);
             xHat = - solve(SS, ss);
 
         }
