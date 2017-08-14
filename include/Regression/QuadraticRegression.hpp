@@ -176,8 +176,8 @@ class QuadraticRegression
             // Cicle for every sample
             const double nominal_value = cost(mean);
 
-            buildSerial(cost, mean, nominal_value, samples, X, y);
-//            buildParallel(cost, mean, nominal_value, samples, X, y);
+//            buildSerial(cost, mean, nominal_value, samples, X, y);
+            buildParallel(cost, mean, nominal_value, samples, X, y);
 
             // Obtain the solution
             const mat::fixed<unknow, unknow>I = eye<mat>(unknow, unknow);

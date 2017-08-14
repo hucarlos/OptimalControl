@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
 
-    dataSELQR  = np.loadtxt("SELQR.txt")
-    dataRSELQR = np.loadtxt("iQRSELQR.txt")
+    dataSELQR  = np.loadtxt("SELQR0.txt")
+    dataRSELQR = np.loadtxt("iQRSELQR0.txt")
 
     # multiple box plots for the controls
     f, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex=True, sharey=False)

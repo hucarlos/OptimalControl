@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     State xGoal           = zeros<mat>(XDIM);
 
     // Run iLQR and Extended LQR
-    time_t seed = 22;//1372474623; //time_t seed = time(0);
+    time_t seed = 13;//1372474623; //time_t seed = time(0);
     srand(seed);
 
     xGoal = zeros<vec>(XDIM);
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
     std::vector<State>systemPath(ell +1);
     std::vector<Control>nominalControls(ell);
     std::string filename;
-    const std::string ext(".txt");
+    const std::string ext = std::to_string(seed) + (".txt");
 
     //============================ Set the obstacles =========================
     vec::fixed<ODIM> bottomLeft, topRight;

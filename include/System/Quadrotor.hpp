@@ -75,7 +75,7 @@ class Quadrotor: public BasicSystem<12,4>
             }
             catch(std::runtime_error&e)
             {
-                throw (e);
+                throw (std::logic_error (e.what()));
             }
         }
 
