@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
     State xGoal           = zeros<mat>(XDIM);
 
     // Run iLQR and Extended LQR
-    time_t seed = 13;//1372474623; //time_t seed = time(0);
+    time_t seed = 7; //1372474623; //time_t seed = time(0);
     srand(seed);
 
     xGoal = zeros<vec>(XDIM);
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
     const double scaleFactor    = 10.0;
     const double robotRadius    = 0.3429/2 + 0.1;
 
-    const string mapfile        = "Map1.yaml";
+    const string mapfile        = "/Volumes/Aslan/OptimalControl/Configurations/Quadrotor/map1.yaml";
 
     // For saving results
     std::vector<State>systemPath(ell +1);
@@ -105,13 +105,13 @@ int main(int argc, char *argv[])
     SystemCost<XDIM, UDIM, ODIM>system_cost(&control_cost, &obstacles_cost);
     
     ExtenedState initRadius;
-    initRadius.subvec(0, 2)     = 1.0e-6  * ones<vec>(3);
-    initRadius.subvec(3, 5)     = 1.0e-6  * ones<vec>(3);
-    initRadius.subvec(6, 8)     = 1.0e-6  * ones<vec>(3);
-    initRadius.subvec(9, 11)    = 1.0e-6  * ones<vec>(3);
-    initRadius.subvec(12, 15)   = 1.0e-6  * ones<vec>(4);
+    initRadius.subvec(0, 2)     = 1.0e-7  * ones<vec>(3);
+    initRadius.subvec(3, 5)     = 1.0e-7  * ones<vec>(3);
+    initRadius.subvec(6, 8)     = 1.0e-7  * ones<vec>(3);
+    initRadius.subvec(9, 11)    = 1.0e-7  * ones<vec>(3);
+    initRadius.subvec(12, 15)   = 1.0e-7  * ones<vec>(4);
     
-    double epsilon      = 1.0e-2;
+    double epsilon      = 1.0e-4;
     
    
     // ========================================= SELQR ALGORITHMS =============================
@@ -120,7 +120,8 @@ int main(int argc, char *argv[])
 
     t1=timeNow();
     selqr.estimate(xStart, max_iter, delta, lNominal);
-    std::cout<<"SELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl<<endl;
+    std::cout<<"SELQR TIME(s) "<<duration(timeNow() - t1)<<std::endl;
+    std::cout<<"Final cost: "<<selqr.estimatePath(xStart)<<endl<<endl<<endl;
 
     filename = selqr.getName() + ext;
     selqr.estimatePath(xStart);
@@ -162,11 +163,11 @@ int main(int argc, char *argv[])
     qrselqr.setInitRadius(initRadius);
     qrselqr.setEpsilon(epsilon);
     qrselqr.setGaussiaSampling(true);
-    qrselqr.setSamplingFactor(4);
+    qrselqr.setSamplingFactor(2);
     
     t1=timeNow();
     qrselqr.estimate(xStart, max_iter, delta, lNominal);
-    std::cout<<"iQRSELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl;
+    std::cout<<"iQRSELQR TIME(s) "<<duration(timeNow() - t1)<<std::endl;
 
     filename = qrselqr.getName() + ext;
     std::cout<<"Final cost: "<<qrselqr.estimatePath(xStart)<<endl;

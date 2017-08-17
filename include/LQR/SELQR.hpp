@@ -182,10 +182,15 @@ class SELQR : public BasicLQR<xDim, uDim>
                     // If something goes wrong try to start again
                     if(std::isnan(this->getAccum()) || (!isfinite(this->getAccum())) )
                     {
+                        
+                        this->printProgress();
+                        
                         newCost  = 0.0;
                         oldCost  = -std::log(0.0);
 
                         xHat       = startState;
+                        
+                        
 
                         setInitialConditions(nominalU);
                     }
@@ -193,7 +198,7 @@ class SELQR : public BasicLQR<xDim, uDim>
                 catch(std::exception&e)
                 {
                     
-                    this->printConfiguration();
+                    this->printProgress();
                     newCost  = 0.0;
                     oldCost  = -std::log(0.0);
 

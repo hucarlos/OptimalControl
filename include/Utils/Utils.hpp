@@ -18,7 +18,7 @@ using namespace arma;
 
 typedef std::chrono::high_resolution_clock::time_point TimeVar;
 
-#define duration(a) std::chrono::duration_cast<std::chrono::milliseconds>(a).count()
+#define duration(a) std::chrono::duration_cast<std::chrono::seconds>(a).count()
 #define timeNow() std::chrono::high_resolution_clock::now()
 
 /**

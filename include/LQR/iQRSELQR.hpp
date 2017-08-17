@@ -210,7 +210,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
          */
         void setInitialConditions(const std::vector<Control>&nominalU)
         {
-            epsilon *= 0.1;
+            epsilon *= 0.5;
             estimateEpsilon();
 
             initRadius *= 0.5;
@@ -327,7 +327,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
         double estimateEpsilon()
         {
 
-            epsilon = std::max(1.0e-8, epsilon);
+            epsilon = std::max(1.0e-10, epsilon);
             return epsilon;
         }
 
@@ -352,11 +352,11 @@ class iQRSELQR : public SELQR<xDim, uDim>
 //            }
             
             
-            radius.subvec(0, 2)     *= 0.9;
-            radius.subvec(3, 5)     *= 0.9;
-            radius.subvec(6, 8)     *= 0.9;
-            radius.subvec(9, 11)    *= 0.9;
-            radius.subvec(12, 15)   *= 0.9;
+            radius.subvec(0, 2)     *= 0.95;
+            radius.subvec(3, 5)     *= 0.95;
+            radius.subvec(6, 8)     *= 0.95;
+            radius.subvec(9, 11)    *= 0.95;
+            radius.subvec(12, 15)   *= 0.95;
         }
 
 

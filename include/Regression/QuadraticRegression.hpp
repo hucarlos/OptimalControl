@@ -19,12 +19,12 @@ class QuadraticRegression
         typedef arma::vec::fixed<Dim>Inputs;
         typedef arma::mat::fixed<Dim, Dim>InputsMat;
 
-        QuadraticRegression(): gaussian_sampling(true), samples_factor(1), seed(1)
+        QuadraticRegression(): gaussian_sampling(true), samples_factor(1), seed(3)
         {
 
         }
 
-        QuadraticRegression(const bool&gs): gaussian_sampling(gs), samples_factor(1), seed(1)
+        QuadraticRegression(const bool&gs): gaussian_sampling(gs), samples_factor(1), seed(3)
         {
 
         }
@@ -198,6 +198,7 @@ class QuadraticRegression
             else
             {
                 sol = arma::solve(M, b, solve_opts::equilibrate);
+                std::cout<<"chol"<<endl;
             }
 
 
