@@ -9,7 +9,7 @@
 /**
  * @brief The Obstacle class
  */
-template <int obsDim>
+template <uword obsDim>
 class Obstacle
 {
     public:
@@ -102,7 +102,7 @@ class Obstacle
  * @param bottomLeft
  * @param topRight
  */
-template<int obsDim>
+template<uword obsDim>
 void loadMapYAML(const std::string&filename,
                  std::vector< Obstacle<obsDim> >&obstacles,
                  vec::fixed<obsDim>&bottomLeft,

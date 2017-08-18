@@ -19,12 +19,12 @@ class QuadraticRegression
         typedef arma::vec::fixed<Dim>Inputs;
         typedef arma::mat::fixed<Dim, Dim>InputsMat;
 
-        QuadraticRegression(): gaussian_sampling(true), samples_factor(1), seed(3)
+        QuadraticRegression(): gaussian_sampling(true), samples_factor(1), seed(0)
         {
 
         }
 
-        QuadraticRegression(const bool&gs): gaussian_sampling(gs), samples_factor(1), seed(3)
+        QuadraticRegression(const bool&gs): gaussian_sampling(gs), samples_factor(1), seed(0)
         {
 
         }
@@ -62,7 +62,7 @@ class QuadraticRegression
                              const double&lambda=0.0)
         {
 
-            const unsigned int unknow           = ((Dim * (Dim+1))/2) + Dim;
+            const unsigned int unknow           = ((Dim * (Dim+1))/2) + Dim + 0;
             const unsigned int samples_gaussian = samples_factor * unknow;
 
             arma::mat samples;
@@ -88,7 +88,7 @@ class QuadraticRegression
                 const int count_points   = std::ceil((Dim + 3)/8) + 1;
                 const int samples4Sigma  =  (1 << Dim) + 2*Dim;
 
-                const int count_samples  = samples_factor * count_points;
+                const unsigned int count_samples  = samples_factor * count_points;
 
                 arma::mat points;
 
@@ -96,7 +96,7 @@ class QuadraticRegression
 
                 SigmaPoints<Dim>sPoints;
 
-                for(int i=0; i<count_samples; i++)
+                for(unsigned int i=0; i<count_samples; i++)
                 {
                     //sigmaPoints<xDim>(mean, radius, points);
 
@@ -198,7 +198,7 @@ class QuadraticRegression
             else
             {
                 sol = arma::solve(M, b, solve_opts::equilibrate);
-                std::cout<<"chol"<<endl;
+//                std::cout<<"chol"<<endl;
             }
 
 
@@ -212,7 +212,7 @@ class QuadraticRegression
             }
 
             // Set vector and sacalar the solutions
-            a = sol.subvec(mat_unknow, size(a));
+            a = sol.subvec(mat_unknow, arma::size(a));
 
             scalar = nominal_value;
 
@@ -279,7 +279,7 @@ class QuadraticRegression
         void buildSerial(std::function<double (const Inputs&)>cost, const vec&mean,
                          const double&nominal_value, const mat&samples, mat&X, vec&y)
         {
-            for(int i=0; i<samples.n_cols; i++)
+            for(unsigned int i=0; i<samples.n_cols; i++)
             {
                 const Inputs sample = samples.col(i);
                 const double value  = cost(sample);
@@ -302,7 +302,7 @@ class QuadraticRegression
                     }
                 }
 
-                for(int r=0; r<Dim; r++, p++)
+                for(unsigned int r=0; r<Dim; r++, p++)
                 {
                     X(i,p) = diff(r);
                 }
@@ -353,7 +353,7 @@ class QuadraticRegression
                         }
                     }
 
-                    for(int r=0; r<Dim; r++, p++)
+                    for(unsigned int r=0; r<Dim; r++, p++)
                     {
                         X(i,p) = diff(r);
                     }
