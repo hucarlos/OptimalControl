@@ -89,11 +89,12 @@ void regularize(mat &Q, const double&epsilon, const double&factor)
             double max = 0.0;
             for(unsigned int e=0; e<aDim; e++)
             {
-                max = std::max(std::abs(eigval(e)), factor);
+                max = std::min(std::abs(eigval(e)), factor);
             }
 
             for (unsigned int i = 0; i < aDim; ++i)
             {
+
 
                 if (eigval(i) < epsilon)
                 {

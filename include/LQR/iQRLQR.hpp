@@ -21,6 +21,8 @@ class iQRLQR : public iLQR<xDim, uDim>
         typedef typename iLQR<xDim, uDim>::ControlStateMatrix ControlStateMatrix;
         typedef typename iLQR<xDim, uDim>::StateControlMatrix StateControlMatrix;
 
+        typedef typename QuadraticRegression<xDim + uDim>::SAMPLING_MODE SAMPLING_MODE;
+
     public:
         iQRLQR(const unsigned int ell,
                const BasicSystem<xDim, uDim>*ptr_system,
@@ -37,10 +39,15 @@ class iQRLQR : public iLQR<xDim, uDim>
                              ptr_final_cost,
                              VIS,
                              name),
-            gaussian_sampling(false),
-            sampling_factor(2.0)
+            samplingMode(SAMPLING_MODE::GAUSSIAN_S),
+            samplingFactor(1.0)
         {
             f_Cost2Go = std::bind(&iQRLQR::cost2Go, this, std::placeholders::_1);
+
+            decreceFactors = 0.5 * arma::ones<vec>(xDim + uDim);
+
+            minEig  = 0.0;
+            factEig = 0.1;
 
         }
 
@@ -70,8 +77,8 @@ class iQRLQR : public iLQR<xDim, uDim>
             mean.subvec(xDim, xDim + uDim -1)  = uHat.at(t);
 
             // ===================== COST TO GO ==================
+            setRegression();
 
-            QuadraticRegression<xDim + uDim>regression(gaussian_sampling, sampling_factor);
 
             // Results matrix
             ExtendedStateMatrix M;
@@ -88,9 +95,8 @@ class iQRLQR : public iLQR<xDim, uDim>
             }
             while(std::abs(error) > epsilon);
 
-            toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
-            const double max = M.diag().max();//0.1;
-            regularize<xDim + uDim>(M, 0.0, max);
+            checkM(M);
+
             m = m - M*mean;
 
             //Quadratic terms
@@ -126,6 +132,27 @@ class iQRLQR : public iLQR<xDim, uDim>
         }
 
         /**
+         * @brief setRegression
+         */
+        void setRegression()
+        {
+            regression.setSamplingMode(samplingMode);
+            regression.setSamplingFactor(samplingFactor);
+            regression.setSeed(seed);
+        }
+
+        /**
+         * @brief checkM
+         * @param M
+         */
+        void checkM(ExtendedStateMatrix&M)
+        {
+
+            toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
+            regularize<xDim + uDim>(M, minEig, factEig);
+        }
+
+        /**
          * @brief decreceRadius
          * @param radius
          */
@@ -149,6 +176,26 @@ class iQRLQR : public iLQR<xDim, uDim>
             radius.subvec(6, 8)     *= 0.5;
             radius.subvec(9, 11)    *= 0.5;
             radius.subvec(12, 15)   *= 0.5;
+
+            radius %= decreceFactors;
+        }
+
+        /**
+         * @brief setDecreceFactors
+         * @param input
+         */
+        void setDecreceFactors(arma::vec::fixed<xDim+uDim>&input)
+        {
+            decreceFactors = input;
+        }
+
+        /**
+         * @brief setDecreceFactors
+         * @param factor
+         */
+        void setDecreceFactors(const double&factor)
+        {
+            decreceFactors = factor * arma::ones<vec>(xDim + uDim);
         }
 
 
@@ -201,18 +248,18 @@ class iQRLQR : public iLQR<xDim, uDim>
          * @brief getGaussian_sampling
          * @return
          */
-        bool getGaussianSampling() const
+        SAMPLING_MODE getSamplingMode() const
         {
-            return gaussian_sampling;
+            return samplingMode;
         }
 
         /**
          * @brief setGaussian_sampling
          * @param value
          */
-        void setGaussiaSampling(bool value)
+        void setSamplingMode(SAMPLING_MODE value)
         {
-            gaussian_sampling = value;
+            samplingMode = value;
         }
 
         /**
@@ -221,7 +268,7 @@ class iQRLQR : public iLQR<xDim, uDim>
          */
         unsigned int getSamplingFactor() const
         {
-            return sampling_factor;
+            return samplingFactor;
         }
 
         /**
@@ -230,7 +277,25 @@ class iQRLQR : public iLQR<xDim, uDim>
          */
         void setSamplingFactor(unsigned int value)
         {
-            sampling_factor = value;
+            samplingFactor = value;
+        }
+
+        /**
+         * @brief setMinEig
+         * @param min
+         */
+        void setMinEig(const double&min)
+        {
+            minEig = min;
+        }
+
+        /**
+         * @brief setFactEig
+         * @param fac
+         */
+        void setFactEig(const double&fac)
+        {
+            factEig = fac;
         }
 
     protected:
@@ -243,8 +308,15 @@ class iQRLQR : public iLQR<xDim, uDim>
         double epsilon;
         double error;
 
-        bool gaussian_sampling;
-        unsigned int sampling_factor;
+        arma::vec::fixed<xDim+uDim>decreceFactors;
+
+        QuadraticRegression<xDim + uDim>regression;
+        SAMPLING_MODE samplingMode;
+        unsigned int samplingFactor;
+        unsigned int seed;
+
+        double minEig;
+        double factEig;
 
 
 };

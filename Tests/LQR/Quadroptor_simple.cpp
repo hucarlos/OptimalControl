@@ -29,18 +29,17 @@ typedef arma::vec::fixed<XDIM + UDIM>ExtenedState;
 
 typedef arma::mat::fixed<UDIM, XDIM>ControlStateMatrix;
 
-
-
+typedef typename QuadraticRegression<XDIM + UDIM>::SAMPLING_MODE SAMPLING_MODE;
 
 
 int main(int argc, char *argv[])
 {
     TimeVar t1;
 
-    Quadrotor robot(1.0/20.0);
+    Quadrotor robot(1.0/25.0);
 
 
-    const unsigned int ell      = 150;
+    const unsigned int ell      = 200;
     const double delta          = 1.0e-4;
     const unsigned int max_iter = 100;
 
@@ -48,7 +47,7 @@ int main(int argc, char *argv[])
     State xGoal           = zeros<mat>(XDIM);
 
     // Run iLQR and Extended LQR
-    time_t seed = 7; //1372474623; //time_t seed = time(0);
+    time_t seed = 31; //1372474623; //time_t seed = time(0);
     srand(seed);
 
     xGoal = zeros<vec>(XDIM);
@@ -104,14 +103,18 @@ int main(int argc, char *argv[])
 
     SystemCost<XDIM, UDIM, ODIM>system_cost(&control_cost, &obstacles_cost);
     
+    const double factor         = 1.0e-2;
     ExtenedState initRadius;
-    initRadius.subvec(0, 2)     = 1.0e-7  * ones<vec>(3);
-    initRadius.subvec(3, 5)     = 1.0e-7  * ones<vec>(3);
-    initRadius.subvec(6, 8)     = 1.0e-7  * ones<vec>(3);
-    initRadius.subvec(9, 11)    = 1.0e-7  * ones<vec>(3);
-    initRadius.subvec(12, 15)   = 1.0e-7  * ones<vec>(4);
+    initRadius.subvec(0, 2)     = factor  * ones<vec>(3);
+    initRadius.subvec(3, 5)     = factor  * ones<vec>(3);
+    initRadius.subvec(6, 8)     = factor  * ones<vec>(3);
+    initRadius.subvec(9, 11)    = factor  * ones<vec>(3);
+    initRadius.subvec(12, 15)   = factor  * ones<vec>(4);
+
+    // X and Y could be bigger
+    initRadius.subvec(0, 1)    = 1.0e-2 * ones<vec>(2);;
     
-    double epsilon      = 1.0e-4;
+    double epsilon      = 1.0e-2;
     
    
     // ========================================= SELQR ALGORITHMS =============================
@@ -162,8 +165,11 @@ int main(int argc, char *argv[])
     
     qrselqr.setInitRadius(initRadius);
     qrselqr.setEpsilon(epsilon);
-    qrselqr.setGaussiaSampling(true);
+    qrselqr.setSamplingMode(SAMPLING_MODE::ELLIPSOID_S);
     qrselqr.setSamplingFactor(2);
+    qrselqr.setDecreceFactors(0.9);
+    qrselqr.setMinEig(0.0);
+    qrselqr.setFactEig(0.1);
     
     t1=timeNow();
     qrselqr.estimate(xStart, max_iter, delta, lNominal);

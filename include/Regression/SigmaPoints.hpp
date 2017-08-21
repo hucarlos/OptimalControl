@@ -255,4 +255,79 @@ class SigmaPoints
         mat Ones;
 };
 
+/**
+ * @brief The ellipsoidPoints class
+ */
+template<uword Dim>
+class EllipsoidPoints
+{
+    public:
+        EllipsoidPoints(const unsigned int&sc): _samples_count(sc),
+            _rs(arma::randu<vec>(sc)),
+            _pt(arma::randn<mat>(sc, Dim))
+        {
+            // get scalings for each point onto the surface of a unit hypersphere fac = sum(pt(:,:)'.^2);
+            _fac = sum(square(_pt.t())).t();
+
+
+            // calculate scaling for each point to be within the unit hypersphere with radii rs
+            // fac = (rs.^(1/ndims)) ./ sqrt(fac');
+            for(unsigned int i=0; i<_rs.n_elem; i++)
+            {
+                _fac(i) = std::pow(_rs(i), 1.0/Dim) / std::sqrt(_fac(i));
+            }
+        }
+
+        /**
+         * @brief getSamples
+         * @param mean
+         * @param covmat
+         * @param pnts
+         */
+        void getSamples(const vec::fixed<Dim>&mean, const mat::fixed<Dim, Dim>&covmat, mat&pnts) const
+        {
+            pnts = zeros<mat>(_samples_count, Dim);
+
+            vec eigval;
+            mat eigvec;
+
+            eig_sym(eigval, eigvec, covmat);
+
+            // scale points to the ellipsoid using the eigenvalues and rotate with
+            // the eigenvectors and add centroid
+            vec d = sqrt(eigval);
+
+            for(unsigned int i=0; i<_samples_count; i++)
+            {
+                // scale points to a uniform distribution within unit hypersphere
+                pnts.row(i) = _fac(i) * _pt.row(i);
+
+                // scale and rotate to ellipsoid
+                pnts.row(i) = ((pnts.row(i) % d.t() * eigvec.t()).t() + mean).t();
+            }
+
+        }
+
+        /**
+         * @brief samplescount
+         * @return
+         */
+
+        unsigned int samplescount() const
+        {
+            return _samples_count;
+        }
+
+    protected:
+        const unsigned int _samples_count;
+
+        // Auxiliar vector and matrixs
+        const vec _rs;
+        const mat _pt;
+
+        vec _fac;
+
+};
+
 #endif // SIGMAPOINTS_HPP
+

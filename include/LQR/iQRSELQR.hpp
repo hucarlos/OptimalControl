@@ -21,6 +21,8 @@ class iQRSELQR : public SELQR<xDim, uDim>
         typedef typename SELQR<xDim,uDim>::ControlStateMatrix ControlStateMatrix;
         typedef typename SELQR<xDim,uDim>::StateControlMatrix StateControlMatrix;
 
+        typedef typename QuadraticRegression<xDim + uDim>::SAMPLING_MODE SAMPLING_MODE;
+
         iQRSELQR(const unsigned int ell,
                  const BasicSystem<xDim, uDim>*ptr_system,
                  const QuadraticCost<xDim> *ptr_init_cost,
@@ -30,10 +32,12 @@ class iQRSELQR : public SELQR<xDim, uDim>
                  const std::string&name="iQRSELQR"):
 
             SELQR<xDim, uDim>(ell, ptr_system, ptr_init_cost, ptr_system_cost, ptr_final_cost, VIS, name),
-            epsilon(1.0e-2), gaussian_sampling(false), sampling_factor(1)
+            epsilon(1.0e-2), samplingMode(SAMPLING_MODE::GAUSSIAN_S), samplingFactor(1), seed(0)
         {
+            decreceFactors = 0.5 * arma::ones<vec>(xDim + uDim);
 
-
+            minEig  = 0.0;
+            factEig = 0.1;
         }
 
         void quadratizeCost2Come(const State&xHat, const Control&uHat, const int&t,
@@ -44,7 +48,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
                                  Control&e,
                                  double&scalar_b)
         {
-            QuadraticRegression<xDim + uDim>regression(gaussian_sampling, sampling_factor);
+            setRegression();
 
             const State xHatPrime   = this->system->move(xHat, uHat);
 
@@ -121,7 +125,8 @@ class iQRSELQR : public SELQR<xDim, uDim>
                                Control&e,
                                double&scalar_b)
         {
-            QuadraticRegression<xDim + uDim>regression(gaussian_sampling, sampling_factor);
+
+            setRegression();
 
             const State xHatPrime   = this->system->inverse_dynamics(xHat, uHat);
 
@@ -133,8 +138,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
             ExtendedStateMatrix M;
             ExtendedState m;
             double scalar;
-
-            regression.setGaussianSampling(gaussian_sampling);
 
             std::function< double(const ExtendedState&)> function;
 
@@ -184,11 +187,8 @@ class iQRSELQR : public SELQR<xDim, uDim>
         void checkM(ExtendedStateMatrix&M)
         {
 
-            const double min = 0.0;
-            const double fac = 0.1;
-
             toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
-            regularize<xDim + uDim>(M, min, fac);
+            regularize<xDim + uDim>(M, minEig, factEig);
         }
 
 
@@ -210,7 +210,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
          */
         void setInitialConditions(const std::vector<Control>&nominalU)
         {
-            epsilon *= 0.5;
+            epsilon *= 0.1;
             estimateEpsilon();
 
             initRadius *= 0.5;
@@ -351,12 +351,8 @@ class iQRSELQR : public SELQR<xDim, uDim>
 //                }
 //            }
             
+            radius %= decreceFactors;
             
-            radius.subvec(0, 2)     *= 0.95;
-            radius.subvec(3, 5)     *= 0.95;
-            radius.subvec(6, 8)     *= 0.95;
-            radius.subvec(9, 11)    *= 0.95;
-            radius.subvec(12, 15)   *= 0.95;
         }
 
 
@@ -369,6 +365,17 @@ class iQRSELQR : public SELQR<xDim, uDim>
                         << this->epsilon        <<' '
                         << error                <<' '   << initRadius.t()   << ' '
                         <<std::endl;
+        }
+
+
+        /**
+         * @brief setRegression
+         */
+        void setRegression()
+        {
+            regression.setSamplingMode(samplingMode);
+            regression.setSamplingFactor(samplingFactor);
+            regression.setSeed(seed);
         }
 
 
@@ -412,18 +419,18 @@ class iQRSELQR : public SELQR<xDim, uDim>
          * @brief getGaussian_sampling
          * @return
          */
-        bool getGaussianSampling() const
+        SAMPLING_MODE getSamplingMode() const
         {
-            return gaussian_sampling;
+            return samplingMode;
         }
 
         /**
          * @brief setGaussian_sampling
          * @param value
          */
-        void setGaussiaSampling(bool value)
+        void setSamplingMode(SAMPLING_MODE value)
         {
-            gaussian_sampling = value;
+            samplingMode = value;
         }
 
         /**
@@ -432,7 +439,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
          */
         unsigned int getSamplingFactor() const
         {
-            return sampling_factor;
+            return samplingFactor;
         }
 
         /**
@@ -441,7 +448,43 @@ class iQRSELQR : public SELQR<xDim, uDim>
          */
         void setSamplingFactor(unsigned int value)
         {
-            sampling_factor = value;
+            samplingFactor = value;
+        }
+
+        /**
+         * @brief setDecreceFactors
+         * @param input
+         */
+        void setDecreceFactors(arma::vec::fixed<xDim+uDim>&input)
+        {
+            decreceFactors = input;
+        }
+
+        /**
+         * @brief setDecreceFactors
+         * @param factor
+         */
+        void setDecreceFactors(const double&factor)
+        {
+            decreceFactors = factor * arma::ones<vec>(xDim + uDim);
+        }
+
+        /**
+         * @brief setMinEig
+         * @param min
+         */
+        void setMinEig(const double&min)
+        {
+            minEig = min;
+        }
+
+        /**
+         * @brief setFactEig
+         * @param fac
+         */
+        void setFactEig(const double&fac)
+        {
+            factEig = fac;
         }
 
     protected:
@@ -452,8 +495,15 @@ class iQRSELQR : public SELQR<xDim, uDim>
         double epsilon;
         double error;
 
-        bool gaussian_sampling;
-        unsigned int sampling_factor;
+        QuadraticRegression<xDim + uDim>regression;
+        SAMPLING_MODE samplingMode;
+        unsigned int samplingFactor;
+        unsigned int seed;
+
+        arma::vec::fixed<xDim+uDim>decreceFactors;
+
+        double minEig;
+        double factEig;
 
 
 };

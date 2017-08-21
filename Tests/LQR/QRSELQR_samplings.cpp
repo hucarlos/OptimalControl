@@ -28,6 +28,8 @@ typedef arma::mat::fixed<XDIM + UDIM, 1>ExtenedState;
 
 typedef arma::mat::fixed<UDIM, XDIM>ControlStateMatrix;
 
+typedef typename QuadraticRegression<XDIM + UDIM>::SAMPLING_MODE SAMPLING_MODE;
+
 
 int main(int argc, char *argv[])
 {
@@ -130,7 +132,7 @@ int main(int argc, char *argv[])
             iQRSELQR<XDIM, UDIM>gaussianPoints(ell, &robot, &init_cost, &system_cost, &final_cost, false);
             gaussianPoints.setInitRadius(radius);
             gaussianPoints.setEpsilon(epsilon);
-            gaussianPoints.setGaussiaSampling(true);
+            gaussianPoints.setSamplingMode(SAMPLING_MODE::GAUSSIAN_S);
             gaussianPoints.setSamplingFactor(2);
 
             tGaussian=timeNow();
@@ -142,7 +144,7 @@ int main(int argc, char *argv[])
             iQRSELQR<XDIM, UDIM>sigmaPoints(ell, &robot, &init_cost, &system_cost, &final_cost, false);
             sigmaPoints.setInitRadius(radius);
             sigmaPoints.setEpsilon(epsilon);
-            sigmaPoints.setGaussiaSampling(false);
+            sigmaPoints.setSamplingMode(SAMPLING_MODE::GAUSSIAN_S);
             sigmaPoints.setSamplingFactor(1);
 
             tSigma=timeNow();
