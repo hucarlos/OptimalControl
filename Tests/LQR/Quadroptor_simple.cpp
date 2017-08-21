@@ -67,11 +67,11 @@ int main(int argc, char *argv[])
     uNominal[0] = uNominal[1] = uNominal[2] = uNominal[3] = robot.getGravity() * robot.getMass()/4;
 
 
-    const double obstacleFactor = 1.0;
+    const double obstacleFactor = 1;
     const double scaleFactor    = 10.0;
     const double robotRadius    = 0.3429/2 + 0.1;
 
-    const string mapfile        = "/Volumes/Aslan/OptimalControl/Configurations/Quadrotor/map1.yaml";
+    const string mapfile        = "/home/cimat/OptimalControl/Configurations/Quadrotor/map1.yaml";
 
     // For saving results
     std::vector<State>systemPath(ell +1);
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 
     t1=timeNow();
     selqr.estimate(xStart, max_iter, delta, lNominal);
-    std::cout<<"SELQR TIME(s) "<<duration(timeNow() - t1)<<std::endl;
+    std::cout<<"SELQR TIME(s) "<<duration(timeNow() - t1)/1000.0<<std::endl;
     std::cout<<"Final cost: "<<selqr.estimatePath(xStart)<<endl<<endl<<endl;
 
     filename = selqr.getName() + ext;
@@ -138,14 +138,16 @@ int main(int argc, char *argv[])
 
     iQRLQR<XDIM, UDIM>iqrlqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
    
-//    t1=timeNow();
-//    iqrlqr.estimate(xStart, max_iter, delta, lNominal);
-//    std::cout<<"iQRLQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl;
+
     
 //    iqrlqr.setInitRadius(initRadius);
 //    iqrlqr.setEpsilon(epsilon);
 //    iqrlqr.setGaussiaSampling(true);
 //    iqrlqr.setSamplingFactor(2);
+
+//    t1=timeNow();
+//    iqrlqr.estimate(xStart, max_iter, delta, lNominal);
+//    std::cout<<"iQRLQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl;
     
 
 
@@ -173,7 +175,7 @@ int main(int argc, char *argv[])
     
     t1=timeNow();
     qrselqr.estimate(xStart, max_iter, delta, lNominal);
-    std::cout<<"iQRSELQR TIME(s) "<<duration(timeNow() - t1)<<std::endl;
+    std::cout<<"iQRSELQR TIME(s) "<<duration(timeNow() - t1)/1000.0<<std::endl;
 
     filename = qrselqr.getName() + ext;
     std::cout<<"Final cost: "<<qrselqr.estimatePath(xStart)<<endl;

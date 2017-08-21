@@ -18,7 +18,7 @@ using namespace arma;
 
 typedef std::chrono::high_resolution_clock::time_point TimeVar;
 
-#define duration(a) std::chrono::duration_cast<std::chrono::seconds>(a).count()
+#define duration(a) std::chrono::duration_cast<std::chrono::milliseconds>(a).count()
 #define timeNow() std::chrono::high_resolution_clock::now()
 
 /**
@@ -86,26 +86,89 @@ void regularize(mat &Q, const double&epsilon, const double&factor)
 
         if( eig_sym(eigval, eigvec, Q, "std"))
         {
-            double max = 0.0;
-            for(unsigned int e=0; e<aDim; e++)
+            double max = eigval.max();
+
+            if(max <= 0.0)
             {
-                max = std::min(std::abs(eigval(e)), factor);
+                for (unsigned int i = 0; i < aDim; ++i)
+                {
+                   eigval(i) =  - max;
+
+                   if(eigval(i) <= 0.0)
+                   {
+                       eigval(i) = factor;
+                   }
+                }
+
             }
+
+            else
+            {
+                for (unsigned int i = 0; i < aDim; ++i)
+                {
+
+                    if (eigval(i) < epsilon)
+                    {
+                        eigval(i) = max;
+                    }
+
+                }
+            }
+
+            arma::mat D(aDim, aDim, fill::zeros);
+            D.diag() = eigval;
+
+            Q = eigvec * D * eigvec.t();
+        }
+
+        else
+        {
+            throw(std::logic_error("Not eigen decomposition"));
+        }
+
+    }
+    catch(std::logic_error&e)
+    {
+        throw std::logic_error(e.what());
+    }
+}
+
+
+/**
+ * @brief regularize
+ * @param Q
+ * @param epsilon
+ * @param factor
+ * @return
+ */
+template <uword aDim>
+void regularize2(mat &Q, const double&epsilon, const double&factor)
+{
+
+
+    try
+    {
+        // Use eigen solver
+        vec eigval;
+        mat eigvec;
+
+        if( eig_sym(eigval, eigvec, Q, "std"))
+        {
 
             for (unsigned int i = 0; i < aDim; ++i)
             {
-
 
                 if (eigval(i) < epsilon)
                 {
                     eigval(i) = factor;
                 }
 
-                arma::mat D(aDim, aDim, fill::zeros);
-                D.diag() = eigval;
-
-                Q = eigvec * D * eigvec.t();
             }
+
+            arma::mat D(aDim, aDim, fill::zeros);
+            D.diag() = eigval;
+
+            Q = eigvec * D * eigvec.t();
         }
 
         else
@@ -260,9 +323,9 @@ double funcTime(F&func,  Args&&... args)
  */
 inline void print_matrix(const mat&in)
 {
-    for(int i=0; i<in.n_rows; i++)
+    for(unsigned int i=0; i<in.n_rows; i++)
     {
-        for(int j=0; j<in.n_cols; j++)
+        for(unsigned int j=0; j<in.n_cols; j++)
         {
             std::cout << std::left << std::setw(9) << in(i,j) << " ";
         }
@@ -280,7 +343,7 @@ inline void print_matrix(const mat&in)
  */
 inline void print_vector(const vec&in)
 {
-    for(int i=0; i<in.n_elem; i++)
+    for(unsigned int i=0; i<in.n_elem; i++)
     {
         std::cout << std::left << std::setw(13) << in(i) << " ";
     }

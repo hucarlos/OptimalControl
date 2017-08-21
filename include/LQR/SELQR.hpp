@@ -485,7 +485,7 @@ class SELQR : public BasicLQR<xDim, uDim>
             StateMatrix SS    = S.at(t) + SBar.at(t);
             State ss          = s.at(t) + sBar.at(t);
 
-//            regularize<xDim>(SS, 1.0e-3);
+//            regularize<xDim>(SS, 0.0, 1.0e-3);
             xHat = - solve(SS, ss);
 
         }
