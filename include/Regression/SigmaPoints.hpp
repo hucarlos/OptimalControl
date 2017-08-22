@@ -293,7 +293,7 @@ class SigmaPoints
                 points.col(i)               = mean + temp;
             }
 
-            init =+ 64;
+            init += 64;
             for(unsigned int i = init, s=0; s< r2.n_elem; i++, s++)
             {
                 const vec::fixed<Dim> temp  = fac * arma::sqrt(radius) % Ones.row(r2(s)).t();

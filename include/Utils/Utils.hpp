@@ -27,7 +27,7 @@ typedef std::chrono::high_resolution_clock::time_point TimeVar;
  * @param epsilon
  */
 template <uword aDim>
-void regularize(mat &Q, const double&epsilon)
+void regularize0(mat &Q, const double&epsilon)
 {
 
 

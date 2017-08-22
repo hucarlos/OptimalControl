@@ -214,13 +214,11 @@ class iQRSELQR : public SELQR<xDim, uDim>
          */
         void setInitialConditions(const std::vector<Control>&nominalU)
         {
-            epsilon *= 0.9;
+            epsilon *= 0.5;
             estimateEpsilon();
 
-            initRadius *= 0.9;
+            initRadius *= 0.5;
             
-           
-
             this->reset(nominalU);
         }
 

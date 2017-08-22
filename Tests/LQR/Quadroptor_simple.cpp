@@ -43,59 +43,14 @@ int main(int argc, char *argv[])
     const double delta          = 1.0e-4;
     const unsigned int max_iter = 100;
 
-    State xStart          = zeros<mat>(XDIM);
-    State xGoal           = zeros<mat>(XDIM);
-
-    // Run iLQR and Extended LQR
-
-
-    xGoal = zeros<vec>(XDIM);
-
-//    // Create distributions for sampling
-//    const unsigned int seed = 100;
-//    std::default_random_engine generator(seed);
-//    std::uniform_real_distribution<double> init_x(-2.26, 2.26);
-//    std::uniform_real_distribution<double> init_y(-2.26, 2.26);
-//    std::uniform_real_distribution<double> init_z(-2.25, 2.25);
-
-//    xGoal(0) = init_x(generator);
-//    xGoal(1) = init_y(generator);
-//    xGoal(2) = init_z(generator);
-
-//    time_t seed = 1503359178;
-    time_t seed = 1503362689; time(0);
-    std::cout<<seed<<endl;
-    srand(seed);
-    int random = rand() % 12;
-
-    xGoal(random / 4)               = ((double) rand() / RAND_MAX) * 4.5 - 2.25; //M_PI; //0; //
-    xGoal(((random / 4) + 1) % 3)   = ((random % 4) / 2 == 0 ? 2.25 : -2.25) + ((double) rand() / RAND_MAX) * 0.02 - 0.01;
-    xGoal(((random / 4) + 2) % 3)   = ((random % 4) % 2 == 0 ? 2.25 : -2.25) + ((double) rand() / RAND_MAX) * 0.02 - 0.01;
-
-    xStart = -xGoal;
-    
-    const ControlMat R          = 20  * eye<mat>(UDIM, UDIM);
-    const StateMat Q            = 500 * eye<mat>(XDIM, XDIM);
-
-
-    Control uNominal      = zeros<vec>(UDIM);
-
-    uNominal[0] = uNominal[1] = uNominal[2] = uNominal[3] = robot.getGravity() * robot.getMass()/4;
-
-
     const double obstacleFactor = 1;
     const double scaleFactor    = 10.0;
     const double robotRadius    = 0.3429/2 + 0.1;
 
-    const string mapfile        = "/home/cimat/OptimalControl/Configurations/Quadrotor/map1.yaml";
-
-    // For saving results
-    std::vector<State>systemPath(ell +1);
-    std::vector<Control>nominalControls(ell);
-    std::string filename;
-    const std::string ext = std::to_string(seed) + (".txt");
+    bool vis = false;
 
     //============================ Set the obstacles =========================
+    const string mapfile        = "map1.yaml";
     vec::fixed<ODIM> bottomLeft, topRight;
     std::vector<Obstacle<ODIM> >obstacles;
     loadMapYAML(mapfile, obstacles, bottomLeft, topRight);
@@ -108,73 +63,126 @@ int main(int argc, char *argv[])
     obstacles_cost.setScaleFactor(scaleFactor);
     obstacles_cost.setObstacleFactor(obstacleFactor);
 
-    // =========================== Init all the cost functions ==========================
+    const unsigned int samples = 50;
+    unsigned int winner = 0;
 
-    std::vector<Control>lNominal(ell);
-    std::fill(lNominal.begin(), lNominal.end(), uNominal);
+    time_t seed = 1503423184; time(0);
+    srand(seed);
 
-    QuadraticCost<XDIM>init_cost(xStart, Q);
-    QuadraticCost<XDIM>final_cost(xGoal, Q);
-    QuadraticCost<UDIM>control_cost(uNominal, R);
+    std::cout<<"Seed: "<<seed<<endl<<endl;
 
-    SystemCost<XDIM, UDIM, ODIM>system_cost(&control_cost, &obstacles_cost);
-    
-    ExtenedState initRadius;
-    initRadius.subvec(0, 2)     = 1.0e-7  * ones<vec>(3);
-    initRadius.subvec(3, 5)     = 1.0e-7 * ones<vec>(3);
-    initRadius.subvec(6, 8)     = 1.0e-7  * ones<vec>(3);
-    initRadius.subvec(9, 11)    = 1.0e-7  * ones<vec>(3);
-    initRadius.subvec(12, 15)   = 1.0e-7  * ones<vec>(4);
-    
-    double epsilon      = 1.0e-3;
-    
-   
-    // ========================================= SELQR ALGORITHMS =============================
+    for(unsigned int i=0; i<samples; i++)
+    {
 
-    SELQR<XDIM, UDIM>selqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
+        State xStart          = zeros<mat>(XDIM);
+        State xGoal           = zeros<mat>(XDIM);
 
-    t1=timeNow();
-    selqr.estimate(xStart, max_iter, delta, lNominal);
-    std::cout<<"SELQR TIME(s) "<<duration(timeNow() - t1)/1000.0<<std::endl;
-    std::cout<<"Final cost: "<<selqr.estimatePath(xStart)<<endl<<endl<<endl;
+        int random = rand() % 12;
 
-    filename = selqr.getName() + ext;
-    selqr.estimatePath(xStart);
+        xGoal(random / 4)               = ((double) rand() / RAND_MAX) * 4.5 - 2.25; //M_PI; //0; //
+        xGoal(((random / 4) + 1) % 3)   = ((random % 4) / 2 == 0 ? 2.25 : -2.25) + ((double) rand() / RAND_MAX) * 0.02 - 0.01;
+        xGoal(((random / 4) + 2) % 3)   = ((random % 4) % 2 == 0 ? 2.25 : -2.25) + ((double) rand() / RAND_MAX) * 0.02 - 0.01;
 
-    selqr.getNominalState(systemPath);
-    selqr.getNominalControl(nominalControls);
+        xStart = -xGoal;
 
-    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+        const ControlMat R  = 20.0  * eye<mat>(UDIM, UDIM);
+        const StateMat Q    = 500.0 * eye<mat>(XDIM, XDIM);
 
 
-    // ========================================= iQRSELQR ALGORITHMS =============================
+        Control uNominal    = zeros<vec>(UDIM);
 
-    iQRSELQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
+        uNominal[0] = uNominal[1] = uNominal[2] = uNominal[3] = robot.getGravity() * robot.getMass()/4;
 
-    
-    qrselqr.setInitRadius(initRadius);
-    qrselqr.setEpsilon(epsilon);
-    qrselqr.setSamplingMode(SAMPLING_MODE::ELLIPSOID_S);
-    qrselqr.setSamplingFactor(1);
-    qrselqr.setDecreceFactors(0.95);
-    qrselqr.setMinEig(0.0);
-    qrselqr.setFactEig(0.3);
-    qrselqr.setParallel(true);
-    
-    t1=timeNow();
-    qrselqr.estimate(xStart, max_iter, delta, lNominal);
-    std::cout<<"iQRSELQR TIME(s) "<<duration(timeNow() - t1)/1000.0<<std::endl;
+        // For saving results
+        std::vector<State>systemPath(ell +1);
+        std::vector<Control>nominalControls(ell);
+        std::string filename;
+        const std::string ext = std::to_string(seed) + (".txt");
 
-    filename = qrselqr.getName() + ext;
-    std::cout<<"Final cost: "<<qrselqr.estimatePath(xStart)<<endl;
+        // =========================== Init all the cost functions ==========================
 
-    qrselqr.getNominalState(systemPath);
-    qrselqr.getNominalControl(nominalControls);
+        std::vector<Control>lNominal(ell);
+        std::fill(lNominal.begin(), lNominal.end(), uNominal);
 
-    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+        QuadraticCost<XDIM>init_cost(xStart, Q);
+        QuadraticCost<XDIM>final_cost(xGoal, Q);
+        QuadraticCost<UDIM>control_cost(uNominal, R);
+
+        SystemCost<XDIM, UDIM, ODIM>system_cost(&control_cost, &obstacles_cost);
+
+        try
+        {
+            ExtenedState initRadius;
+            initRadius.subvec(0, 2)     = 1.0e-6  * ones<vec>(3);
+            initRadius.subvec(3, 5)     = 1.0e-6 * ones<vec>(3);
+            initRadius.subvec(6, 8)     = 1.0e-6  * ones<vec>(3);
+            initRadius.subvec(9, 11)    = 1.0e-6  * ones<vec>(3);
+            initRadius.subvec(12, 15)   = 1.0e-6  * ones<vec>(4);
+
+            double epsilon      = 1.0e-2;
+
+            // ========================================= SELQR ALGORITHMS =============================
+
+            SELQR<XDIM, UDIM>selqr(ell, &robot, &init_cost, &system_cost, &final_cost, vis);
+
+            t1=timeNow();
+            selqr.estimate(xStart, max_iter, delta, lNominal);
+            double timeSELQR = duration(timeNow() - t1)/1000.0;
+
+            filename = selqr.getName() + ext;
+            selqr.estimatePath(xStart);
+
+            selqr.getNominalState(systemPath);
+            selqr.getNominalControl(nominalControls);
+
+            printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
 
+            // ========================================= iQRSELQR ALGORITHMS =============================
 
+            iQRSELQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, vis);
+
+            qrselqr.setInitRadius(initRadius);
+            qrselqr.setEpsilon(epsilon);
+            qrselqr.setSamplingMode(SAMPLING_MODE::ELLIPSOID_S);
+            qrselqr.setSamplingFactor(1);
+            qrselqr.setDecreceFactors(0.95);
+            qrselqr.setMinEig(1.0e-3);
+            qrselqr.setFactEig(0.9);
+            qrselqr.setParallel(true);
+
+            t1=timeNow();
+            qrselqr.estimate(xStart, max_iter, delta, lNominal);
+            double timeQRSELQR = duration(timeNow() - t1)/1000.0;
+
+            filename = qrselqr.getName() + ext;
+
+            qrselqr.getNominalState(systemPath);
+            qrselqr.getNominalControl(nominalControls);
+
+            printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+
+            if(selqr.getAccum() > qrselqr.getAccum())
+            {
+                winner ++;
+            }
+
+            std::cout << i <<'\t'
+                           <<"Time (ms): "  << std::left << setw(8) << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
+                           <<"Cost: "       << std::left << setw(13) << selqr.getAccum()  << std::left << setw(13) << qrselqr.getAccum()<<'\t'
+                           <<"Iters: "      << std::left << setw(7) << selqr.iterations() << std::left << setw(7) << qrselqr.iterations()<<'\t'
+                           <<xStart.subvec(0,2).t() << endl;
+
+
+        }
+        catch(std::exception&e)
+        {
+            std::cerr<<e.what()<<endl;
+            continue;
+        }
+
+    }
+    std::cout<<"Win %: "<<(double(winner)/samples)*100<<endl;
     return 0;
 
 }

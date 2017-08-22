@@ -191,9 +191,7 @@ class SELQR : public BasicLQR<xDim, uDim>
                         newCost  = 0.0;
                         oldCost  = -std::log(0.0);
 
-                        xHat       = startState;
-                        
-                        
+                        xHat       = startState;                                                
 
                         setInitialConditions(nominalU);
                     }
@@ -409,8 +407,6 @@ class SELQR : public BasicLQR<xDim, uDim>
             P = zeros<mat>(uDim, xDim);
 
             this->systemCost->quadratize(xHat, uHat, Q, R, P, q, r);
-
-
 
             double unused = 0.0;
 
