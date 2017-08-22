@@ -7,6 +7,7 @@ SET (CMAKE_CXX_FLAGS_RELEASE        "-O3 -DNDEBUG")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 set(CMAKE_LIBRARY_PATH ${CMAKE_LIBRARY_PATH} /usr/local/lib /opt/intel/mkl/lib/intel64/)
 
+
 find_package(Armadillo REQUIRED)
 find_package(yaml-cpp)
 

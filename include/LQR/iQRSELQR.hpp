@@ -32,7 +32,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
                  const std::string&name="iQRSELQR"):
 
             SELQR<xDim, uDim>(ell, ptr_system, ptr_init_cost, ptr_system_cost, ptr_final_cost, VIS, name),
-            epsilon(1.0e-2), samplingMode(SAMPLING_MODE::GAUSSIAN_S), samplingFactor(1), seed(0)
+            epsilon(1.0e-2), samplingMode(SAMPLING_MODE::GAUSSIAN_S), samplingFactor(1), seed(0), _parallel(false)
         {
             decreceFactors = 0.5 * arma::ones<vec>(xDim + uDim);
 
@@ -184,6 +184,10 @@ class iQRSELQR : public SELQR<xDim, uDim>
         }
 
 
+        /**
+         * @brief checkM
+         * @param M
+         */
         void checkM(ExtendedStateMatrix&M)
         {
 
@@ -210,10 +214,10 @@ class iQRSELQR : public SELQR<xDim, uDim>
          */
         void setInitialConditions(const std::vector<Control>&nominalU)
         {
-            epsilon *= 0.1;
+            epsilon *= 0.9;
             estimateEpsilon();
 
-            initRadius *= 0.5;
+            initRadius *= 0.9;
             
            
 
@@ -339,18 +343,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
         void decreceRadius(ExtendedState&radius)
         {
 
-//            for(unsigned int r=0; r<(xDim + uDim); r++)
-//            {
-//                if(r == 2)
-//                {
-//                    radius(r) *= 0.1;
-//                }
-//                else
-//                {
-//                    radius(r) *= 0.95;
-//                }
-//            }
-            
             radius %= decreceFactors;
             
         }
@@ -376,6 +368,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
             regression.setSamplingMode(samplingMode);
             regression.setSamplingFactor(samplingFactor);
             regression.setSeed(seed);
+            regression.setParallel(_parallel);
         }
 
 
@@ -487,7 +480,26 @@ class iQRSELQR : public SELQR<xDim, uDim>
             factEig = fac;
         }
 
-    protected:
+        /**
+         * @brief getParallel
+         * @return
+         */
+        bool getParallel() const
+        {
+            return _parallel;
+        }
+
+        /**
+         * @brief setParallel
+         * @param parallel
+         */
+        void setParallel(bool parallel)
+        {
+            _parallel = parallel;
+        }
+
+
+protected:
 
         // Regression quadratic parameters
         ExtendedState initRadius;
@@ -499,6 +511,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
         SAMPLING_MODE samplingMode;
         unsigned int samplingFactor;
         unsigned int seed;
+        bool _parallel;
 
         arma::vec::fixed<xDim+uDim>decreceFactors;
 
@@ -509,5 +522,3 @@ class iQRSELQR : public SELQR<xDim, uDim>
 };
 
 #endif // IQRSELQR_HPP
-
-

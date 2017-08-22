@@ -250,6 +250,58 @@ class SigmaPoints
             return samplesCount;
         }
 
+        /**
+         * @brief getBasicSigmapoints
+         * @param mean
+         * @param radius
+         * @param points
+         */
+        void getSamplingSigmaPoints(const vec::fixed<Dim>&mean,
+                                    const vec::fixed<Dim>&radius,
+                                    arma::mat&points)
+        {
+            // Configure all points
+            const int total_samples = 2 * mean.n_elem + 1 + 128;
+
+            arma::ivec r1 = randi<ivec>(64, distr_param(0, 63));
+            arma::ivec r2 = randi<ivec>(64, distr_param(64, 127));
+
+
+            mat sigma         = eye(Dim, Dim);
+            sigma.diag()      = arma::sqrt(radius);
+
+            points            = mat(Dim, total_samples, fill::zeros);
+
+            // Get the samples over every axis
+            points.col(0) = mean;
+            for(unsigned int i=1; i<=Dim; i++)
+            {
+                const vec::fixed<Dim> temp = sigma.col(i-1);
+
+                points.col(i)      = mean + temp;
+                points.col(i+Dim)  = mean - temp;
+            }
+
+            // Get the sqrt of the matrix
+            const double fac = 1.0/std::sqrt(Dim);
+
+            unsigned int init = 2*Dim + 1;
+
+            for(unsigned int i = init, s=0; s< r1.n_elem; i++, s++)
+            {
+                const vec::fixed<Dim> temp  = fac * arma::sqrt(radius) % Ones.row(r1(s)).t();
+                points.col(i)               = mean + temp;
+            }
+
+            init =+ 64;
+            for(unsigned int i = init, s=0; s< r2.n_elem; i++, s++)
+            {
+                const vec::fixed<Dim> temp  = fac * arma::sqrt(radius) % Ones.row(r2(s)).t();
+                points.col(i)               = mean + temp;
+            }
+
+        }
+
     protected:
         const int samplesCount;
         mat Ones;

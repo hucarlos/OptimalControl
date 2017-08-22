@@ -183,7 +183,10 @@ class SELQR : public BasicLQR<xDim, uDim>
                     if(std::isnan(this->getAccum()) || (!isfinite(this->getAccum())) )
                     {
                         
-                        this->printProgress();
+                        if(this->vis)
+                        {
+                            this->printProgress();
+                        }
                         
                         newCost  = 0.0;
                         oldCost  = -std::log(0.0);
@@ -198,7 +201,10 @@ class SELQR : public BasicLQR<xDim, uDim>
                 catch(std::exception&e)
                 {
                     
-                    this->printProgress();
+                    if(this->vis)
+                    {
+                        this->printProgress();
+                    }
                     newCost  = 0.0;
                     oldCost  = -std::log(0.0);
 

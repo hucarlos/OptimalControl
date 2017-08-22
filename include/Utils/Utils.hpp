@@ -92,7 +92,7 @@ void regularize(mat &Q, const double&epsilon, const double&factor)
             {
                 for (unsigned int i = 0; i < aDim; ++i)
                 {
-                   eigval(i) =  - max;
+                   eigval(i) =  eigval(i) - max;
 
                    if(eigval(i) <= 0.0)
                    {
@@ -109,7 +109,7 @@ void regularize(mat &Q, const double&epsilon, const double&factor)
 
                     if (eigval(i) < epsilon)
                     {
-                        eigval(i) = max;
+                        eigval(i) = factor;
                     }
 
                 }
@@ -135,11 +135,10 @@ void regularize(mat &Q, const double&epsilon, const double&factor)
 
 
 /**
- * @brief regularize
+ * @brief regularize2
  * @param Q
  * @param epsilon
  * @param factor
- * @return
  */
 template <uword aDim>
 void regularize2(mat &Q, const double&epsilon, const double&factor)
@@ -182,6 +181,58 @@ void regularize2(mat &Q, const double&epsilon, const double&factor)
         throw std::logic_error(e.what());
     }
 }
+
+template <uword aDim>
+void regularizeMax(mat &Q, const double&epsilon, const double&factor)
+{
+
+
+    try
+    {
+        // Use eigen solver
+        vec eigval;
+        mat eigvec;
+
+
+        double max = std::numeric_limits<double>::min();
+
+        if( eig_sym(eigval, eigvec, Q, "std"))
+        {
+
+            for(unsigned int e=0; e< aDim; e++)
+            {
+                max = std::max(std::abs(eigval(e)), factor);
+            }
+
+            for (unsigned int i = 0; i < aDim; ++i)
+            {
+
+                if (eigval(i) < epsilon)
+                {
+                    eigval(i) = max;
+                }
+
+            }
+
+            arma::mat D(aDim, aDim, fill::zeros);
+            D.diag() = eigval;
+
+            Q = eigvec * D * eigvec.t();
+        }
+
+        else
+        {
+            throw(std::logic_error("Not eigen decomposition"));
+        }
+
+    }
+    catch(std::logic_error&e)
+    {
+        throw std::logic_error(e.what());
+    }
+}
+
+
 
 /**
  * @brief toZero

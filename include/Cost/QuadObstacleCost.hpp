@@ -148,7 +148,7 @@ class QuadObstacleCost : public ObstaclesCost<xDim, oDim>
                 qObs += a1*d;
             }
 
-            regularize<oDim>(QObs, 0.1);
+            regularize<oDim>(QObs, 0.0);
             Q.submat(0,0,oDim-1, oDim-1)    += QObs;
             q.subvec(0,oDim-1)              += qObs - QObs * x.subvec(0,oDim-1);
 

@@ -10,6 +10,7 @@ SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
 find_package(Armadillo REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
+
 set(PROJECT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
 set(LOCAL_INCLUDE_DIR /usr/local/include)
 
