@@ -18,7 +18,7 @@ using namespace arma;
 
 typedef std::chrono::high_resolution_clock::time_point TimeVar;
 
-#define duration(a) std::chrono::duration_cast<std::chrono::seconds>(a).count()
+#define duration(a) std::chrono::duration_cast<std::chrono::milliseconds>(a).count()
 #define timeNow() std::chrono::high_resolution_clock::now()
 
 /**
@@ -89,7 +89,7 @@ void regularize(mat &Q, const double&epsilon, const double&factor)
             double max = 0.0;
             for(unsigned int e=0; e<aDim; e++)
             {
-                max = std::min(std::abs(eigval(e)), factor);
+                max = std::max(std::abs(eigval(e)), factor);
             }
 
             for (unsigned int i = 0; i < aDim; ++i)
@@ -98,7 +98,7 @@ void regularize(mat &Q, const double&epsilon, const double&factor)
 
                 if (eigval(i) < epsilon)
                 {
-                    eigval(i) = factor;
+                    eigval(i) = max;
                 }
 
                 arma::mat D(aDim, aDim, fill::zeros);

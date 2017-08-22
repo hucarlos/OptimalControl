@@ -139,8 +139,15 @@ int main(int argc, char *argv[])
             iQRSELQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, false);
             qrselqr.setInitRadius(radius);
             qrselqr.setEpsilon(epsilon);
+
+            vec::fixed<XDIM + UDIM>decress = 0.95 * ones<vec>(XDIM + UDIM);
+            decress(2) = 0.1;
             qrselqr.setSamplingMode(SAMPLING_MODE::GAUSSIAN_S);
             qrselqr.setSamplingFactor(2);
+            qrselqr.setDecreceFactors(decress);
+
+            qrselqr.setMinEig(0.0);
+            qrselqr.setFactEig(0.1);
 
             tQRSELQR=timeNow();
             qrselqr.estimate(xStart, max_iter, delta, lNominal);
