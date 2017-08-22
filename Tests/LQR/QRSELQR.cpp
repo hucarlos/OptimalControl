@@ -135,19 +135,20 @@ int main(int argc, char *argv[])
             double timeSELQR = duration(timeNow() - tSELQR);
 
             // ========================================= iQRSELQR ALGORITHMS =============================
+            vec::fixed<XDIM + UDIM>decres = 0.95 * ones<vec>(XDIM + UDIM);
+            decres(2) = 0.1;
 
             iQRSELQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, false);
             qrselqr.setInitRadius(radius);
             qrselqr.setEpsilon(epsilon);
 
-            vec::fixed<XDIM + UDIM>decress = 0.95 * ones<vec>(XDIM + UDIM);
-            decress(2) = 0.1;
-            qrselqr.setSamplingMode(SAMPLING_MODE::GAUSSIAN_S);
-            qrselqr.setSamplingFactor(2);
-            qrselqr.setDecreceFactors(decress);
+            qrselqr.setSamplingMode(SAMPLING_MODE::SIGMA_S);
+            qrselqr.setSamplingFactor(1);
 
+            qrselqr.setDecreceFactors(decres);
             qrselqr.setMinEig(0.0);
             qrselqr.setFactEig(0.1);
+            qrselqr.setParallel(false);
 
             tQRSELQR=timeNow();
             qrselqr.estimate(xStart, max_iter, delta, lNominal);
@@ -167,9 +168,10 @@ int main(int argc, char *argv[])
             }
 
             std::cout << experiment <<'\t'
-                                    <<"Time (ms): "   << timeSELQR            <<' '   << timeQRSELQR<<'\t'
-                                    <<"Cost: "        << selqr.getAccum()     <<' '   << qrselqr.getAccum()<<'\t'
-                                    <<"Iters: "       << selqr.iterations()   <<' '   << qrselqr.iterations()<<endl;
+                                    <<"Time (ms): "  << std::left << setw(8) << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
+                                    <<"Cost: "       << std::left << setw(13) << selqr.getAccum()  << std::left << setw(13) << qrselqr.getAccum()<<'\t'
+                                    <<"Iters: "      << std::left << setw(7) << selqr.iterations() << std::left << setw(7) << qrselqr.iterations()<<endl;
+
 
             experiment++;
 
