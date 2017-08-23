@@ -4,6 +4,9 @@
 #include <iostream>
 #include <Utils/Utils.hpp>
 
+#include "tbb/parallel_for.h"
+#include "tbb/task_scheduler_init.h"
+
 using namespace std;
 using namespace arma;
 
@@ -261,7 +264,7 @@ class SigmaPoints
                                     arma::mat&points)
         {
             // Configure all points
-            const int total_samples = 2 * mean.n_elem + 1 + 128;
+            const int total_samples = (2 * mean.n_elem) + 1 + 128;
 
             arma::ivec r1 = randi<ivec>(64, distr_param(0, 63));
             arma::ivec r2 = randi<ivec>(64, distr_param(64, 127));
@@ -347,39 +350,46 @@ class EllipsoidPoints
 
             // scale points to the ellipsoid using the eigenvalues and rotate with
             // the eigenvectors and add centroid
-            vec d = sqrt(eigval);
+            const vec d = sqrt(eigval);
 
-            for(unsigned int i=0; i<_samples_count; i++)
-            {
-                // scale points to a uniform distribution within unit hypersphere
-                pnts.row(i) = _fac(i) * _pt.row(i);
+            //            tbb::task_scheduler_init init(tbb::task_scheduler_init::automatic);
+            //            tbb::parallel_for(
+            //                        tbb::blocked_range<size_t>(0, pnts.n_rows),
+            //                        [eigvec, &d, &pnts, &mean, this](const tbb::blocked_range<size_t>& r)
+//            {
+                for(unsigned int i=0; i<_samples_count; i++)
+                    //                for (size_t i=r.begin();i<r.end();++i)
+                {
+                    // scale points to a uniform distribution within unit hypersphere
+                    pnts.row(i) = this->_fac(i) * this->_pt.row(i);
 
-                // scale and rotate to ellipsoid
-                pnts.row(i) = ((pnts.row(i) % d.t() * eigvec.t()).t() + mean).t();
+                    // scale and rotate to ellipsoid
+                    pnts.row(i) = ((pnts.row(i) % d.t() * eigvec.t()).t() + mean).t();
+                }
+                //            });
+
             }
 
-        }
-
-        /**
+            /**
          * @brief samplescount
          * @return
          */
 
-        unsigned int samplescount() const
-        {
-            return _samples_count;
-        }
+            unsigned int samplescount() const
+            {
+                return _samples_count;
+            }
 
-    protected:
-        const unsigned int _samples_count;
+            protected:
+            const unsigned int _samples_count;
 
-        // Auxiliar vector and matrixs
-        const vec _rs;
-        const mat _pt;
+            // Auxiliar vector and matrixs
+            const vec _rs;
+            const mat _pt;
 
-        vec _fac;
+            vec _fac;
 
-};
+        };
 
 #endif // SIGMAPOINTS_HPP
 

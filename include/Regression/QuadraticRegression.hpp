@@ -15,37 +15,42 @@ using namespace arma;
 template<uword Dim>
 class QuadraticRegression
 {
-public:
-    typedef arma::vec::fixed<Dim>Inputs;
-    typedef arma::mat::fixed<Dim, Dim>InputsMat;
+    public:
+        typedef arma::vec::fixed<Dim>Inputs;
+        typedef arma::mat::fixed<Dim, Dim>InputsMat;
 
-    enum SAMPLING_MODE {GAUSSIAN_S, SIGMA_S, ELLIPSOID_S};
+        enum SAMPLING_MODE {GAUSSIAN_S, SIGMA_S, ELLIPSOID_S};
 
-    QuadraticRegression(): sampling_mode(GAUSSIAN_S), samplingFactor(1), seed(0)
-    {
+        QuadraticRegression(): sampling_mode(GAUSSIAN_S), samplingFactor(1), seed(0),  _unknown(((Dim * (Dim+1))/2) + Dim),
+            ellipPoints(samplingFactor * _unknown)
+        {
 
-    }
+        }
 
-    QuadraticRegression(SAMPLING_MODE mode): sampling_mode(mode), samplingFactor(1), seed(0)
-    {
+        QuadraticRegression(SAMPLING_MODE mode): sampling_mode(mode), samplingFactor(1), seed(0),
+            _unknown(((Dim * (Dim+1))/2) + Dim),
+            ellipPoints(samplingFactor * _unknown)
+        {
 
-    }
+        }
 
-    QuadraticRegression(SAMPLING_MODE mode, const uint64_t&s):  sampling_mode(GAUSSIAN_S), samplingFactor(1),
-        seed(s)
-    {
+        QuadraticRegression(SAMPLING_MODE mode, const uint64_t&s):  sampling_mode(GAUSSIAN_S), samplingFactor(1),
+            seed(s), _unknown(((Dim * (Dim+1))/2) + Dim),
+            ellipPoints(samplingFactor * _unknown)
+        {
 
-    }
+        }
 
-    QuadraticRegression(SAMPLING_MODE mode, const unsigned int&s, const unsigned int sf):
-        sampling_mode(mode), samplingFactor(sf), seed(s)
-    {
+        QuadraticRegression(SAMPLING_MODE mode, const unsigned int&s, const unsigned int sf):
+            sampling_mode(mode), samplingFactor(sf), seed(s), _unknown(((Dim * (Dim+1))/2) + Dim),
+            ellipPoints(samplingFactor * _unknown)
+        {
 
-    }
+        }
 
-public:
+    public:
 
-    /**
+        /**
          * @brief getRegression
          * @param cost
          * @param mean
@@ -56,76 +61,73 @@ public:
          * @param lambda
          * @return
          */
-    double getRegression(std::function<double (const Inputs&)>cost,
-                         const Inputs&mean,
-                         InputsMat&A,
-                         Inputs&a,
-                         double&scalar,
-                         const Inputs&radius,
-                         const double&lambda=0.0)
-    {
-
-        const unsigned int unknow           = ((Dim * (Dim+1))/2) + Dim;
-        const unsigned int samples_gaussian = samplingFactor * unknow;
-
-        arma::mat samples;
-
-        InputsMat cov;
-
-        vec2DiagMat(radius, cov);
-
-
-        if(sampling_mode == GAUSSIAN_S)
+        double getRegression(std::function<double (const Inputs&)>cost,
+                             const Inputs&mean,
+                             InputsMat&A,
+                             Inputs&a,
+                             double&scalar,
+                             const Inputs&radius,
+                             const double&lambda=0.0)
         {
 
-            samples = mat(Dim, samples_gaussian, fill::zeros);
-            const int ncols = cov.n_cols;
-            arma_rng::set_seed(seed);
-            arma::mat Y     = arma::randn(samples_gaussian, ncols);
-            samples         = (arma::repmat(mean, 1, samples_gaussian).t() + Y * arma::chol(cov)).t();
-        }
+            const unsigned int unknow           = ((Dim * (Dim+1))/2) + Dim;
+            const unsigned int samples_gaussian = samplingFactor * unknow;
 
-        else if(sampling_mode == ELLIPSOID_S)
-        {
+            arma::mat samples;
 
-            const EllipsoidPoints<Dim> ellipPoints(samples_gaussian);
-            mat esamples;
-            ellipPoints.getSamples(mean, cov, esamples);
-            samples = esamples.t();
-        }
-        else if(sampling_mode == SIGMA_S)
-        {
+            InputsMat cov;
 
-            Inputs startRadius = radius;
-            const int count_points   = std::ceil((Dim + 3)/8) + 1;
-            const int samples4Sigma  =  (1 << Dim) + 2*Dim;
-
-            const unsigned int count_samples  = samplingFactor * count_points;
-
-            arma::mat points;
-
-            samples = mat(Dim, samples4Sigma*count_samples, fill::zeros);
+            vec2DiagMat(radius, cov);
 
 
-
-            for(unsigned int i=0; i<count_samples; i++)
+            if(sampling_mode == GAUSSIAN_S)
             {
-                //sigmaPoints<xDim>(mean, radius, points);
 
-                sPoints.estimate(mean, radius, points);
-
-                samples.submat(0, i*samples4Sigma, size(Dim, samples4Sigma)) = points.submat(0,1,size(Dim, samples4Sigma));
-
-                startRadius *= 0.5;
+                samples = mat(Dim, samples_gaussian, fill::zeros);
+                const int ncols = cov.n_cols;
+                arma_rng::set_seed(seed);
+                arma::mat Y     = arma::randn(samples_gaussian, ncols);
+                samples         = (arma::repmat(mean, 1, samples_gaussian).t() + Y * arma::chol(cov)).t();
             }
 
+            else if(sampling_mode == ELLIPSOID_S)
+            {
+                mat esamples;
+                ellipPoints.getSamples(mean, cov, esamples);
+                samples = esamples.t();
+            }
+            else if(sampling_mode == SIGMA_S)
+            {
+
+                Inputs startRadius = radius;
+                const int count_points   = std::max(int(std::ceil((Dim + 3)/8)), 1);
+                const int samples4Sigma  =  (1 << Dim) + 2*Dim;
+
+                const unsigned int count_samples  = samplingFactor * count_points;
+
+                arma::mat points;
+
+                samples = mat(Dim, samples4Sigma*count_samples, fill::zeros);
+
+
+                for(unsigned int i=0; i<count_samples; i++)
+                {
+                    //sigmaPoints<xDim>(mean, radius, points);
+
+                    sPoints.estimate(mean, radius, points);
+
+                    samples.submat(0, i*samples4Sigma, size(Dim, samples4Sigma)) = points.submat(0,1,size(Dim, samples4Sigma));
+
+                    startRadius *= 0.5;
+                }
+
+            }
+
+            double relative_error = this->solve(cost, mean, samples, A, a, scalar, lambda);
+            return relative_error;
         }
 
-        double relative_error = this->solve(cost, mean, samples, A, a, scalar, lambda);
-        return relative_error;
-    }
-
-    /**
+        /**
          * @brief getRegression
          * @param cost
          * @param mean
@@ -136,20 +138,20 @@ public:
          * @param lambda
          * @return
          */
-    double getRegression(std::function<double (const Inputs&)>cost,
-                         const Inputs&mean,
-                         InputsMat&A,
-                         Inputs&a,
-                         double&scalar,
-                         const double&alpha=0.01,
-                         const double&lambda=0.0)
-    {
-        Inputs radius = alpha * ones<vec>(Dim);
-        return this->getRegression(cost, mean, A, a, scalar, radius, lambda);
-    }
+        double getRegression(std::function<double (const Inputs&)>cost,
+                             const Inputs&mean,
+                             InputsMat&A,
+                             Inputs&a,
+                             double&scalar,
+                             const double&alpha=0.01,
+                             const double&lambda=0.0)
+        {
+            Inputs radius = alpha * ones<vec>(Dim);
+            return this->getRegression(cost, mean, A, a, scalar, radius, lambda);
+        }
 
 
-    /**
+        /**
          * @brief solve
          * @param cost
          * @param mean
@@ -160,86 +162,86 @@ public:
          * @param lambda
          * @return
          */
-    double solve(std::function<double (const Inputs&)>cost,
-                 const Inputs&mean,
-                 const mat&samples,
-                 InputsMat&A,
-                 Inputs&a,
-                 double&scalar,
-                 const double&lambda=0.0)
-    {
-
-
-        const int mat_unknow    = (Dim*(Dim + 1)/2);
-        const int unknow        =  mat_unknow + Dim;
-
-        if(unknow <= 0)
+        double solve(std::function<double (const Inputs&)>cost,
+                     const Inputs&mean,
+                     const mat&samples,
+                     InputsMat&A,
+                     Inputs&a,
+                     double&scalar,
+                     const double&lambda=0.0)
         {
-            throw std::runtime_error("Bad dimensions for unknow on solve");
-        }
-
-        const int samples_count = samples.n_cols;
 
 
-        mat X(samples_count, unknow, fill::zeros);
-        vec y(samples_count, fill::zeros);
+            const int mat_unknow    = (Dim*(Dim + 1)/2);
+            const int unknow        =  mat_unknow + Dim;
 
-
-        // Cicle for every sample
-        const double nominal_value = cost(mean);
-
-        if(_parallel)
-            buildParallel(cost, mean, nominal_value, samples, X, y);
-        else
-            buildSerial(cost, mean, nominal_value, samples, X, y);
-
-
-        // Obtain the solution
-        const mat::fixed<unknow, unknow>I = eye<mat>(unknow, unknow);
-
-        mat::fixed<unknow, unknow> L    = X.t() * X;
-        vec::fixed<unknow>b             = X.t() * y;
-
-        mat::fixed<unknow, unknow> M    = (L + lambda*I);
-        vec::fixed<unknow> sol;
-
-        mat R;
-        if(arma::chol(R, M))
-        {
-            // Solve the system
-            vec y   = arma::solve(trimatl(R.t()), b);
-            sol     = arma::solve(trimatu(R), y);
-        }
-        else
-        {
-            sol = arma::solve(M, b, solve_opts::equilibrate);
-        }
-
-
-        // Put results on A
-        for(unsigned int i=0, p=0; i<Dim; i++)
-        {
-            for(unsigned int j=i; j<Dim; j++, p++)
+            if(unknow <= 0)
             {
-                A(i,j) = A(j,i) = sol(p);
+                throw std::runtime_error("Bad dimensions for unknow on solve");
             }
+
+            const int samples_count = samples.n_cols;
+
+
+            mat X(samples_count, unknow, fill::zeros);
+            vec y(samples_count, fill::zeros);
+
+
+            // Cicle for every sample
+            const double nominal_value = cost(mean);
+
+            if(_parallel)
+                buildParallel(cost, mean, nominal_value, samples, X, y);
+            else
+                buildSerial(cost, mean, nominal_value, samples, X, y);
+
+
+            // Obtain the solution
+            const mat::fixed<unknow, unknow>I = eye<mat>(unknow, unknow);
+
+            mat::fixed<unknow, unknow> L    = X.t() * X;
+            vec::fixed<unknow>b             = X.t() * y;
+
+            mat::fixed<unknow, unknow> M    = (L + lambda*I);
+            vec::fixed<unknow> sol;
+
+            mat R;
+            if(arma::chol(R, M))
+            {
+                // Solve the system
+                vec y   = arma::solve(trimatl(R.t()), b);
+                sol     = arma::solve(trimatu(R), y);
+            }
+            else
+            {
+                sol = arma::solve(M, b, solve_opts::equilibrate);
+            }
+
+
+            // Put results on A
+            for(unsigned int i=0, p=0; i<Dim; i++)
+            {
+                for(unsigned int j=i; j<Dim; j++, p++)
+                {
+                    A(i,j) = A(j,i) = sol(p);
+                }
+            }
+
+            // Set vector and sacalar the solutions
+            a = sol.subvec(mat_unknow, arma::size(a));
+
+            scalar = nominal_value;
+
+            double error = arma::norm(X*sol - y, 2) / norm(sol, 2); //  L2 norm
+
+            // return relative error
+            return error;
+
+
         }
 
-        // Set vector and sacalar the solutions
-        a = sol.subvec(mat_unknow, arma::size(a));
 
-        scalar = nominal_value;
-
-        double error = arma::norm(X*sol - y, 2) / norm(sol, 2); //  L2 norm
-
-        // return relative error
-        return error;
-
-
-    }
-
-
-    /**
+        /**
          * @brief estimateError
          * @param cost
          * @param state
@@ -249,76 +251,76 @@ public:
          * @param scalar
          * @return
          */
-    double estimateError(std::function<double (const Inputs&)>cost,
-                         const Inputs&mean,
-                         const mat&samples,
-                         InputsMat&A,
-                         Inputs&a,
-                         double&scalar)
-    {
-        double error = 0.0;
-        Inputs  diff;
-
-        for(unsigned int i=0; i<samples.n_cols; i++)
+        double estimateError(std::function<double (const Inputs&)>cost,
+                             const Inputs&mean,
+                             const mat&samples,
+                             InputsMat&A,
+                             Inputs&a,
+                             double&scalar)
         {
-            Inputs sample   = samples.col(i);
-            diff            = sample - mean;
+            double error = 0.0;
+            Inputs  diff;
 
-            error += 0.5*(diff.adjoint()*A*diff)[0] + (a.transpose()*diff)[0] + scalar - cost(sample);
+            for(unsigned int i=0; i<samples.n_cols; i++)
+            {
+                Inputs sample   = samples.col(i);
+                diff            = sample - mean;
+
+                error += 0.5*(diff.adjoint()*A*diff)[0] + (a.transpose()*diff)[0] + scalar - cost(sample);
+            }
+
+            return std::abs(error)/samples.n_cols;
         }
 
-        return std::abs(error)/samples.n_cols;
-    }
-
-    /**
+        /**
          * @brief setGaussianSampling
          * @param in
          */
-    void setSamplingMode(SAMPLING_MODE mode)
-    {
-        sampling_mode = mode;
-    }
+        void setSamplingMode(SAMPLING_MODE mode)
+        {
+            sampling_mode = mode;
+        }
 
-    /**
+        /**
          * @brief setSamplingFactor
          * @param sf
          */
-    void setSamplingFactor(const unsigned int&sf)
-    {
-        samplingFactor = sf;
-    }
+        void setSamplingFactor(const unsigned int&sf)
+        {
+            samplingFactor = sf;
+        }
 
-    /**
+        /**
          * @brief setSeed
          * @param s
          */
-    void setSeed(const unsigned int&s)
-    {
-        seed = s;
-    }
+        void setSeed(const unsigned int&s)
+        {
+            seed = s;
+        }
 
-    /**
+        /**
          * @brief setParallel
          * @param in
          */
-    void setParallel(const bool&in)
-    {
-        _parallel = in;
-    }
+        void setParallel(const bool&in)
+        {
+            _parallel = in;
+        }
 
-    /**
+        /**
          * @brief parallel
          * @return
          */
-    bool parallel() const
-    {
-        return _parallel;
-    }
+        bool parallel() const
+        {
+            return _parallel;
+        }
 
 
-protected:
+    protected:
 
-    /**
+        /**
          * @brief buildSerial
          * @param cost
          * @param mean
@@ -327,61 +329,10 @@ protected:
          * @param X
          * @param y
          */
-    void buildSerial(std::function<double (const Inputs&)>cost, const vec&mean,
-                     const double&nominal_value, const mat&samples, mat&X, vec&y)
-    {
-        for(unsigned int i=0; i<samples.n_cols; i++)
+        void buildSerial(std::function<double (const Inputs&)>cost, const vec&mean,
+                         const double&nominal_value, const mat&samples, mat&X, vec&y)
         {
-            const Inputs sample = samples.col(i);
-            const double value  = cost(sample);
-            const Inputs diff   = sample - mean;
-
-            // Cicle for all the matrix values
-            int p = 0;
-            for(unsigned int r=0; r<Dim; r++)
-            {
-                for(unsigned int c=r; c<Dim; c++, p++)
-                {
-                    X(i,p)  = diff(r)*diff(c);
-
-                    X(i,p) *= 0.5;
-
-                    if(c>r)
-                    {
-                        X(i,p) *= 2.0;
-                    }
-                }
-            }
-
-            for(unsigned int r=0; r<Dim; r++, p++)
-            {
-                X(i,p) = diff(r);
-            }
-
-            y(i) = (value - nominal_value);
-
-        }
-    }
-
-
-    /**
-         * @brief buildParallel
-         * @param cost
-         * @param mean
-         * @param nominal_value
-         * @param samples
-         * @param X
-         * @param y
-         */
-    void buildParallel(std::function<double (const Inputs&)>cost, const vec&mean,
-                       const double&nominal_value, const mat&samples, mat&X, vec&y)
-    {
-        tbb::task_scheduler_init init(3);
-        tbb::parallel_for(
-                    tbb::blocked_range<size_t>(0, samples.n_cols),
-                    [&X,&y,&mean,&nominal_value, &samples, &cost](const tbb::blocked_range<size_t>& r)
-        {
-            for (size_t i=r.begin();i<r.end();++i)
+            for(unsigned int i=0; i<samples.n_cols; i++)
             {
                 const Inputs sample = samples.col(i);
                 const double value  = cost(sample);
@@ -412,21 +363,75 @@ protected:
                 y(i) = (value - nominal_value);
 
             }
-
-        });
-    }
+        }
 
 
+        /**
+         * @brief buildParallel
+         * @param cost
+         * @param mean
+         * @param nominal_value
+         * @param samples
+         * @param X
+         * @param y
+         */
+        void buildParallel(std::function<double (const Inputs&)>cost, const vec&mean,
+                           const double&nominal_value, const mat&samples, mat&X, vec&y)
+        {
+            tbb::task_scheduler_init init(tbb::task_scheduler_init::automatic);
+            tbb::parallel_for(
+                        tbb::blocked_range<size_t>(0, samples.n_cols),
+                        [&X,&y,&mean,&nominal_value, &samples, &cost](const tbb::blocked_range<size_t>& r)
+            {
+                for (size_t i=r.begin();i<r.end();++i)
+                {
+                    const Inputs sample = samples.col(i);
+                    const double value  = cost(sample);
+                    const Inputs diff   = sample - mean;
 
-protected:
+                    // Cicle for all the matrix values
+                    int p = 0;
+                    for(unsigned int r=0; r<Dim; r++)
+                    {
+                        for(unsigned int c=r; c<Dim; c++, p++)
+                        {
+                            X(i,p)  = diff(r)*diff(c);
 
-    SAMPLING_MODE sampling_mode;
-    unsigned int samplingFactor;
-    unsigned int seed;
+                            X(i,p) *= 0.5;
 
-    bool _parallel;
+                            if(c>r)
+                            {
+                                X(i,p) *= 2.0;
+                            }
+                        }
+                    }
 
-    SigmaPoints<Dim>sPoints;
+                    for(unsigned int r=0; r<Dim; r++, p++)
+                    {
+                        X(i,p) = diff(r);
+                    }
+
+                    y(i) = (value - nominal_value);
+
+                }
+
+            });
+        }
+
+
+
+    protected:
+
+        SAMPLING_MODE sampling_mode;
+        unsigned int samplingFactor;
+        unsigned int seed;
+
+        bool _parallel;
+
+        const unsigned int _unknown;
+        SigmaPoints<Dim>sPoints;
+        const EllipsoidPoints<Dim> ellipPoints;
+
 };
 
 

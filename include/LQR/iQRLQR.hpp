@@ -139,6 +139,7 @@ class iQRLQR : public iLQR<xDim, uDim>
             regression.setSamplingMode(samplingMode);
             regression.setSamplingFactor(samplingFactor);
             regression.setSeed(seed);
+            regression.setParallel(_parallel);
         }
 
         /**
@@ -158,25 +159,6 @@ class iQRLQR : public iLQR<xDim, uDim>
          */
         void decreceRadius(ExtendedState&radius)
         {
-
-//            for(unsigned int  r=0; r<(xDim + uDim); r++)
-//            {
-//                if(r == 2)
-//                {
-//                    radius(r) *= 0.1;
-//                }
-//                else
-//                {
-//                    radius(r) *= 0.5;
-//                }
-//            }
-
-            radius.subvec(0, 2)     *= 0.5;
-            radius.subvec(3, 5)     *= 0.5;
-            radius.subvec(6, 8)     *= 0.5;
-            radius.subvec(9, 11)    *= 0.5;
-            radius.subvec(12, 15)   *= 0.5;
-
             radius %= decreceFactors;
         }
 
@@ -298,6 +280,11 @@ class iQRLQR : public iLQR<xDim, uDim>
             factEig = fac;
         }
 
+        void setParallel(bool para)
+        {
+            _parallel = para;
+        }
+
     protected:
 
         std::function< double(const ExtendedState&)> f_Cost2Go;
@@ -317,6 +304,7 @@ class iQRLQR : public iLQR<xDim, uDim>
 
         double minEig;
         double factEig;
+        bool _parallel;
 
 
 };

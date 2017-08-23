@@ -49,6 +49,8 @@ int main(int argc, char *argv[])
 
     bool vis = false;
 
+    ofstream out("QR.txt");
+
     //============================ Set the obstacles =========================
     const string mapfile        = "map1.yaml";
     vec::fixed<ODIM> bottomLeft, topRight;
@@ -63,7 +65,7 @@ int main(int argc, char *argv[])
     obstacles_cost.setScaleFactor(scaleFactor);
     obstacles_cost.setObstacleFactor(obstacleFactor);
 
-    const unsigned int samples = 50;
+    const unsigned int samples = 100;
     unsigned int winner = 0;
 
     time_t seed = 1503423184; time(0);
@@ -82,7 +84,6 @@ int main(int argc, char *argv[])
         xGoal(random / 4)               = ((double) rand() / RAND_MAX) * 4.5 - 2.25; //M_PI; //0; //
         xGoal(((random / 4) + 1) % 3)   = ((random % 4) / 2 == 0 ? 2.25 : -2.25) + ((double) rand() / RAND_MAX) * 0.02 - 0.01;
         xGoal(((random / 4) + 2) % 3)   = ((random % 4) % 2 == 0 ? 2.25 : -2.25) + ((double) rand() / RAND_MAX) * 0.02 - 0.01;
-
         xStart = -xGoal;
 
         const ControlMat R  = 20.0  * eye<mat>(UDIM, UDIM);
@@ -113,13 +114,13 @@ int main(int argc, char *argv[])
         try
         {
             ExtenedState initRadius;
-            initRadius.subvec(0, 2)     = 1.0e-6  * ones<vec>(3);
-            initRadius.subvec(3, 5)     = 1.0e-6 * ones<vec>(3);
-            initRadius.subvec(6, 8)     = 1.0e-6  * ones<vec>(3);
-            initRadius.subvec(9, 11)    = 1.0e-6  * ones<vec>(3);
-            initRadius.subvec(12, 15)   = 1.0e-6  * ones<vec>(4);
+            initRadius.subvec(0, 2)     = 1.0e-5  * ones<vec>(3);
+            initRadius.subvec(3, 5)     = 1.0e-5 * ones<vec>(3);
+            initRadius.subvec(6, 8)     = 1.0e-5  * ones<vec>(3);
+            initRadius.subvec(9, 11)    = 1.0e-5  * ones<vec>(3);
+            initRadius.subvec(12, 15)   = 1.0e-5  * ones<vec>(4);
 
-            double epsilon      = 1.0e-2;
+            double epsilon      = 1.0e-4;
 
             // ========================================= SELQR ALGORITHMS =============================
 
@@ -135,7 +136,7 @@ int main(int argc, char *argv[])
             selqr.getNominalState(systemPath);
             selqr.getNominalControl(nominalControls);
 
-            printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+//            printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
 
             // ========================================= iQRSELQR ALGORITHMS =============================
@@ -146,8 +147,8 @@ int main(int argc, char *argv[])
             qrselqr.setEpsilon(epsilon);
             qrselqr.setSamplingMode(SAMPLING_MODE::ELLIPSOID_S);
             qrselqr.setSamplingFactor(1);
-            qrselqr.setDecreceFactors(0.95);
-            qrselqr.setMinEig(1.0e-3);
+            qrselqr.setDecreceFactors(0.9);
+            qrselqr.setMinEig(0.0);
             qrselqr.setFactEig(0.9);
             qrselqr.setParallel(true);
 
@@ -160,7 +161,7 @@ int main(int argc, char *argv[])
             qrselqr.getNominalState(systemPath);
             qrselqr.getNominalControl(nominalControls);
 
-            printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+//            printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
             if(selqr.getAccum() > qrselqr.getAccum())
             {
@@ -171,7 +172,13 @@ int main(int argc, char *argv[])
                            <<"Time (ms): "  << std::left << setw(8) << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
                            <<"Cost: "       << std::left << setw(13) << selqr.getAccum()  << std::left << setw(13) << qrselqr.getAccum()<<'\t'
                            <<"Iters: "      << std::left << setw(7) << selqr.iterations() << std::left << setw(7) << qrselqr.iterations()<<'\t'
-                           <<xStart.subvec(0,2).t() << endl;
+                           <<xStart.subvec(0,2).t();
+
+            out << i <<'\t'
+                             << std::left << setw(8) << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
+                             << std::left << setw(13) << selqr.getAccum()  << std::left << setw(13) << qrselqr.getAccum()<<'\t'
+                             << std::left << setw(7) << selqr.iterations() << std::left << setw(7) << qrselqr.iterations()<<'\t'
+                             << xStart.subvec(0,2).t();
 
 
         }
