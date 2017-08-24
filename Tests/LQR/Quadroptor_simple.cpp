@@ -31,6 +31,20 @@ typedef arma::mat::fixed<UDIM, XDIM>ControlStateMatrix;
 
 typedef typename QuadraticRegression<XDIM + UDIM>::SAMPLING_MODE SAMPLING_MODE;
 
+ExtenedState setDecreceFactors(const double&p, const double&v,
+                               const double&r, const double&w,
+                               const double&u)
+{
+    ExtenedState result;
+    result.subvec(0, 2)     = p  * ones<vec>(3);
+    result.subvec(3, 5)     = v  * ones<vec>(3);
+    result.subvec(6, 8)     = r  * ones<vec>(3);
+    result.subvec(9, 11)    = w  * ones<vec>(3);
+    result.subvec(12, 15)   = u  * ones<vec>(4);
+
+    return result;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -66,7 +80,7 @@ int main(int argc, char *argv[])
     obstacles_cost.setObstacleFactor(obstacleFactor);
 
     const unsigned int samples = 100;
-    unsigned int samplek = 0;
+    unsigned int samplek = 1;
 
     unsigned int winner = 0;
 
@@ -143,12 +157,12 @@ int main(int argc, char *argv[])
         {
             ExtenedState initRadius;
             initRadius.subvec(0, 2)     = 1.0e-5  * ones<vec>(3);
-            initRadius.subvec(3, 5)     = 1.0e-6  * ones<vec>(3);
-            initRadius.subvec(6, 8)     = 1.0e-6  * ones<vec>(3);
-            initRadius.subvec(9, 11)    = 1.0e-6  * ones<vec>(3);
+            initRadius.subvec(3, 5)     = 1.0e-5  * ones<vec>(3);
+            initRadius.subvec(6, 8)     = 1.0e-7  * ones<vec>(3);
+            initRadius.subvec(9, 11)    = 1.0e-7  * ones<vec>(3);
             initRadius.subvec(12, 15)   = 1.0e-5  * ones<vec>(4);
 
-            double epsilon      = 1.0e-2;
+            double epsilon      = 1.0e-5;
 
             // ========================================= SELQR ALGORITHMS =============================
 
@@ -164,7 +178,7 @@ int main(int argc, char *argv[])
             selqr.getNominalState(systemPath);
             selqr.getNominalControl(nominalControls);
 
-                        printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+            printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
 
             // ========================================= iQRSELQR ALGORITHMS =============================
@@ -174,16 +188,15 @@ int main(int argc, char *argv[])
             qrselqr.setInitRadius(initRadius);
             qrselqr.setEpsilon(epsilon);
 
-            qrselqr.setDecreceFactors(0.9);
+            ExtenedState decrese = setDecreceFactors(0.9, 0.9, 0.1, 0.1, 0.9);
+            qrselqr.setDecreceFactors(decrese);
             qrselqr.setMinEig(0.0);
             qrselqr.setFactEig(0.1);
 
             // Regression parameters
             qrselqr.setSamplingMode(SAMPLING_MODE::GAUSSIAN_S);
-            qrselqr.setSamplingFactor(4);
+            qrselqr.setSamplingFactor(3);
             qrselqr.setParallel(true);
-
-
 
             t1=timeNow();
             qrselqr.estimate(xStart, max_iter, delta, lNominal);
@@ -211,10 +224,10 @@ int main(int argc, char *argv[])
             }
 
             std::cout << samplek <<'\t'
-                        <<"Time (ms): "  << std::left << setw(8) << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
-                        <<"Cost: "       << std::left << setw(13) << selqr.getAccum()  << std::left << setw(13) << qrselqr.getAccum()<<'\t'
-                        <<"Iters: "      << std::left << setw(7) << selqr.iterations() << std::left << setw(7) << qrselqr.iterations()<<'\t'
-                        << radius <<' '<< xGoal.subvec(0,2).t() ;
+                        <<"Time (ms): "  << std::left << setw(8)    << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
+                        <<"Cost: "       << std::left << setw(13)   << selqr.getAccum()   << std::left << setw(13) << qrselqr.getAccum()<<'\t'
+                        <<"Iters: "      << std::left << setw(7)    << selqr.iterations() << std::left << setw(7)  << qrselqr.iterations()<<'\t'
+                        <<"(%)"          << std::left << setw(7)    <<(double(winner)/samplek)*100     <<' '<< xGoal.subvec(0,2).t();
 
             out << samplek <<'\t'
                 << std::left << setw(8) << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
@@ -232,7 +245,7 @@ int main(int argc, char *argv[])
         }
 
     }
-    while(samplek < samples);
+    while(samplek <= samples);
 
     std::cout<<"Win %: "<<(double(winner)/samples)*100<<endl;
     return 0;
