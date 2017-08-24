@@ -123,7 +123,7 @@ void regularize(mat &Q, const double&epsilon, const double&factor)
 
         else
         {
-            throw(std::logic_error("Not eigen decomposition"));
+            throw(std::logic_error("Not eigen decomposition regularization"));
         }
 
     }

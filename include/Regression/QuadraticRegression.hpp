@@ -21,31 +21,52 @@ class QuadraticRegression
 
         enum SAMPLING_MODE {GAUSSIAN_S, SIGMA_S, ELLIPSOID_S};
 
-        QuadraticRegression(): sampling_mode(GAUSSIAN_S), samplingFactor(1), seed(0),  _unknown(((Dim * (Dim+1))/2) + Dim),
-            ellipPoints(samplingFactor * _unknown)
+        /**
+         * @brief QuadraticRegression
+         */
+        QuadraticRegression(): samplingMode(GAUSSIAN_S), samplingFactor(1),
+            seed(0),
+            _unknown(((Dim * (Dim+1))/2) + Dim)
         {
-
+            this->updateSamplesMat();
         }
 
-        QuadraticRegression(SAMPLING_MODE mode): sampling_mode(mode), samplingFactor(1), seed(0),
-            _unknown(((Dim * (Dim+1))/2) + Dim),
-            ellipPoints(samplingFactor * _unknown)
+        /**
+         * @brief QuadraticRegression
+         * @param mode
+         */
+        QuadraticRegression(SAMPLING_MODE mode): samplingMode(mode),
+            samplingFactor(1),
+            seed(0),
+            _unknown(((Dim * (Dim+1))/2) + Dim)
         {
-
+            this->updateSamplesMat();
         }
 
-        QuadraticRegression(SAMPLING_MODE mode, const uint64_t&s):  sampling_mode(GAUSSIAN_S), samplingFactor(1),
-            seed(s), _unknown(((Dim * (Dim+1))/2) + Dim),
-            ellipPoints(samplingFactor * _unknown)
+        /**
+         * @brief QuadraticRegression
+         * @param mode
+         * @param sf
+         */
+        QuadraticRegression(SAMPLING_MODE mode, const unsigned int&sf):  samplingMode(mode), samplingFactor(sf),
+            seed(0),
+            _unknown(((Dim * (Dim+1))/2) + Dim)
         {
-
+          this->updateSamplesMat();
         }
 
-        QuadraticRegression(SAMPLING_MODE mode, const unsigned int&s, const unsigned int sf):
-            sampling_mode(mode), samplingFactor(sf), seed(s), _unknown(((Dim * (Dim+1))/2) + Dim),
-            ellipPoints(samplingFactor * _unknown)
+        /**
+         * @brief QuadraticRegression
+         * @param mode
+         * @param s
+         * @param sf
+         */
+        QuadraticRegression(SAMPLING_MODE mode,  const unsigned int&sf, const unsigned int&s):
+            samplingMode(mode), samplingFactor(sf),
+            seed(s),
+            _unknown(((Dim * (Dim+1))/2) + Dim)
         {
-
+            this->updateSamplesMat();
         }
 
     public:
@@ -69,34 +90,34 @@ class QuadraticRegression
                              const Inputs&radius,
                              const double&lambda=0.0)
         {
-
-            const unsigned int unknow           = ((Dim * (Dim+1))/2) + Dim;
-            const unsigned int samples_gaussian = samplingFactor * unknow;
-
             arma::mat samples;
-
             InputsMat cov;
-
             vec2DiagMat(radius, cov);
 
 
-            if(sampling_mode == GAUSSIAN_S)
+            if(samplingMode == GAUSSIAN_S)
             {
 
-                samples = mat(Dim, samples_gaussian, fill::zeros);
-                const int ncols = cov.n_cols;
-                arma_rng::set_seed(seed);
-                arma::mat Y     = arma::randn(samples_gaussian, ncols);
-                samples         = (arma::repmat(mean, 1, samples_gaussian).t() + Y * arma::chol(cov)).t();
+                samples = mat(Dim, samplesCount, fill::zeros);
+                samples = (arma::repmat(mean, 1, samplesCount).t() + Y * arma::chol(cov)).t();
             }
 
-            else if(sampling_mode == ELLIPSOID_S)
+            else if(samplingMode == ELLIPSOID_S)
             {
+
                 mat esamples;
-                ellipPoints.getSamples(mean, cov, esamples);
+                if(_parallel)
+                {
+                    ellipPoints.getSamplesParallel(mean, cov, esamples);
+                }
+                else
+                {
+                    ellipPoints.getSamples(mean, cov, esamples);
+                }
                 samples = esamples.t();
             }
-            else if(sampling_mode == SIGMA_S)
+
+            else if(samplingMode == SIGMA_S)
             {
 
                 Inputs startRadius = radius;
@@ -278,7 +299,7 @@ class QuadraticRegression
          */
         void setSamplingMode(SAMPLING_MODE mode)
         {
-            sampling_mode = mode;
+            samplingMode = mode;
         }
 
         /**
@@ -288,6 +309,8 @@ class QuadraticRegression
         void setSamplingFactor(const unsigned int&sf)
         {
             samplingFactor = sf;
+            this->updateSamplesMat();
+
         }
 
         /**
@@ -418,23 +441,57 @@ class QuadraticRegression
             });
         }
 
+        /**
+         * @brief updateSamplesMat
+         */
+        void updateSamplesMat()
+        {
+            samplesCount = samplingFactor * _unknown;
+
+            // For Gaussian mode
+            arma_rng::set_seed(seed);
+            Y   = arma::randn(samplesCount, Dim);
+
+            ellipPoints.setSamplesCount(samplesCount);
+
+        }
+
 
 
     protected:
 
-        SAMPLING_MODE sampling_mode;
+        SAMPLING_MODE samplingMode;
         unsigned int samplingFactor;
         unsigned int seed;
 
         bool _parallel;
 
+
+
         const unsigned int _unknown;
+        unsigned int samplesCount;
+
+        arma::mat Y;
+
+        EllipsoidPoints<Dim> ellipPoints;
+
         SigmaPoints<Dim>sPoints;
-        const EllipsoidPoints<Dim> ellipPoints;
+
 
 };
 
 
+/**
+ * @brief compareRegression
+ * @param cost
+ * @param mean
+ * @param covar
+ * @param M
+ * @param m
+ * @param errors
+ * @param samples_count
+ * @param factor
+ */
 template<int Dim>
 void compareRegression(std::function<double (const vec::fixed<Dim>&)>cost,
                        const vec::fixed<Dim>&mean,

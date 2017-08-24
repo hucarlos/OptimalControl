@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
 
-    data = np.loadtxt("QR.txt")
+    data = np.loadtxt("QR_GAUSS.txt")
     times = [data[:,1], data[:, 2]]
 
     iters = [data[:,5], data[:, 6]]
@@ -20,12 +20,12 @@ if __name__ == '__main__':
 
     ax2.boxplot(times, 0, '')
     ax2.set_xticklabels(['SELQR', 'QRSELQR'])
-    ax2.set_ylabel("Time (ms)")
+    ax2.set_ylabel("Time (s)")
 
     ax3.boxplot(cost, 0, '')
     ax3.set_xticklabels(['SELQR', 'QRSELQR'])
     ax3.set_ylabel("cost")
 
-    print np.mean(data[:, 3]), np.mean(data[:, 4])
+    print np.mean(data[:, 1:7], axis=0)
 
     plt.show()

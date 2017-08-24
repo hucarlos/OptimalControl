@@ -32,7 +32,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
                  const std::string&name="iQRSELQR"):
 
             SELQR<xDim, uDim>(ell, ptr_system, ptr_init_cost, ptr_system_cost, ptr_final_cost, VIS, name),
-            epsilon(1.0e-2), samplingMode(SAMPLING_MODE::GAUSSIAN_S), samplingFactor(1), seed(0), _parallel(false)
+            epsilon(1.0e-2)
         {
             decreceFactors = 0.5 * arma::ones<vec>(xDim + uDim);
 
@@ -48,7 +48,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
                                  Control&e,
                                  double&scalar_b)
         {
-            setRegression();
 
             const State xHatPrime   = this->system->move(xHat, uHat);
 
@@ -125,8 +124,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
                                Control&e,
                                double&scalar_b)
         {
-
-            setRegression();
 
             const State xHatPrime   = this->system->inverse_dynamics(xHat, uHat);
 
@@ -214,10 +211,13 @@ class iQRSELQR : public SELQR<xDim, uDim>
          */
         void setInitialConditions(const std::vector<Control>&nominalU)
         {
-            epsilon *= 0.5;
+            epsilon *= 0.95;
             estimateEpsilon();
 
             initRadius *= 0.5;
+
+            if(this->vis)
+                std::cout<<"Radius :"<<initRadius.t();
             
             this->reset(nominalU);
         }
@@ -359,18 +359,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
 
 
         /**
-         * @brief setRegression
-         */
-        void setRegression()
-        {
-            regression.setSamplingMode(samplingMode);
-            regression.setSamplingFactor(samplingFactor);
-            regression.setSeed(seed);
-            regression.setParallel(_parallel);
-        }
-
-
-        /**
          * @brief getInitRadius
          * @return
          */
@@ -404,42 +392,6 @@ class iQRSELQR : public SELQR<xDim, uDim>
         void setEpsilon(const double&value)
         {
             epsilon = value;
-        }
-
-        /**
-         * @brief getGaussian_sampling
-         * @return
-         */
-        SAMPLING_MODE getSamplingMode() const
-        {
-            return samplingMode;
-        }
-
-        /**
-         * @brief setGaussian_sampling
-         * @param value
-         */
-        void setSamplingMode(SAMPLING_MODE value)
-        {
-            samplingMode = value;
-        }
-
-        /**
-         * @brief getSampling_factor
-         * @return
-         */
-        unsigned int getSamplingFactor() const
-        {
-            return samplingFactor;
-        }
-
-        /**
-         * @brief setSampling_factor
-         * @param value
-         */
-        void setSamplingFactor(unsigned int value)
-        {
-            samplingFactor = value;
         }
 
         /**
@@ -478,13 +430,23 @@ class iQRSELQR : public SELQR<xDim, uDim>
             factEig = fac;
         }
 
+        // For regression properties
         /**
-         * @brief getParallel
-         * @return
+         * @brief setGaussian_sampling
+         * @param value
          */
-        bool getParallel() const
+        void setSamplingMode(SAMPLING_MODE value)
         {
-            return _parallel;
+            regression.setSamplingMode(value);
+        }
+
+        /**
+         * @brief setSampling_factor
+         * @param value
+         */
+        void setSamplingFactor(unsigned int value)
+        {
+           regression.setSamplingFactor(value);
         }
 
         /**
@@ -493,7 +455,16 @@ class iQRSELQR : public SELQR<xDim, uDim>
          */
         void setParallel(bool parallel)
         {
-            _parallel = parallel;
+            regression.setParallel(parallel);
+        }
+
+        /**
+         * @brief setRegressionSeed
+         * @param seed
+         */
+        void setRegressionSeed(const unsigned int&seed)
+        {
+            regression.setSeed(seed);
         }
 
 
@@ -506,10 +477,7 @@ protected:
         double error;
 
         QuadraticRegression<xDim + uDim>regression;
-        SAMPLING_MODE samplingMode;
-        unsigned int samplingFactor;
-        unsigned int seed;
-        bool _parallel;
+
 
         arma::vec::fixed<xDim+uDim>decreceFactors;
 

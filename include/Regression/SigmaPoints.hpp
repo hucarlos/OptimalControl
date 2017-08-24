@@ -317,20 +317,18 @@ template<uword Dim>
 class EllipsoidPoints
 {
     public:
-        EllipsoidPoints(const unsigned int&sc): _samples_count(sc),
-            _rs(arma::randu<vec>(sc)),
-            _pt(arma::randn<mat>(sc, Dim))
+
+        EllipsoidPoints( ): _samples_count(Dim)
         {
-            // get scalings for each point onto the surface of a unit hypersphere fac = sum(pt(:,:)'.^2);
-            _fac = sum(square(_pt.t())).t();
-
-
-            // calculate scaling for each point to be within the unit hypersphere with radii rs
-            // fac = (rs.^(1/ndims)) ./ sqrt(fac');
-            for(unsigned int i=0; i<_rs.n_elem; i++)
-            {
-                _fac(i) = std::pow(_rs(i), 1.0/Dim) / std::sqrt(_fac(i));
-            }
+            this->setSamplesRand(Dim);
+        }
+        /**
+         * @brief EllipsoidPoints
+         * @param sc
+         */
+        EllipsoidPoints(const unsigned int&sc): _samples_count(sc)
+        {
+            this->setSamplesRand(sc);
         }
 
         /**
@@ -352,13 +350,42 @@ class EllipsoidPoints
             // the eigenvectors and add centroid
             const vec d = sqrt(eigval);
 
-            //            tbb::task_scheduler_init init(tbb::task_scheduler_init::automatic);
-            //            tbb::parallel_for(
-            //                        tbb::blocked_range<size_t>(0, pnts.n_rows),
-            //                        [eigvec, &d, &pnts, &mean, this](const tbb::blocked_range<size_t>& r)
-//            {
-                for(unsigned int i=0; i<_samples_count; i++)
-                    //                for (size_t i=r.begin();i<r.end();++i)
+            for(unsigned int i=0; i<_samples_count; i++)
+            {
+                // scale points to a uniform distribution within unit hypersphere
+                pnts.row(i) = this->_fac(i) * this->_pt.row(i);
+
+                // scale and rotate to ellipsoid
+                pnts.row(i) = ((pnts.row(i) % d.t() * eigvec.t()).t() + mean).t();
+            }
+
+        }
+
+        /**
+         * @brief getSamplesParallel
+         * @param mean
+         * @param covmat
+         * @param pnts
+         */
+        void getSamplesParallel(const vec::fixed<Dim>&mean, const mat::fixed<Dim, Dim>&covmat, mat&pnts) const
+        {
+            pnts = zeros<mat>(_samples_count, Dim);
+
+            vec eigval;
+            mat eigvec;
+
+            eig_sym(eigval, eigvec, covmat);
+
+            // scale points to the ellipsoid using the eigenvalues and rotate with
+            // the eigenvectors and add centroid
+            const vec d = sqrt(eigval);
+
+            tbb::task_scheduler_init init(tbb::task_scheduler_init::automatic);
+            tbb::parallel_for(
+                        tbb::blocked_range<size_t>(0, pnts.n_rows),
+                        [eigvec, &d, &pnts, &mean, this](const tbb::blocked_range<size_t>& r)
+            {
+                for (size_t i=r.begin();i<r.end();++i)
                 {
                     // scale points to a uniform distribution within unit hypersphere
                     pnts.row(i) = this->_fac(i) * this->_pt.row(i);
@@ -366,30 +393,59 @@ class EllipsoidPoints
                     // scale and rotate to ellipsoid
                     pnts.row(i) = ((pnts.row(i) % d.t() * eigvec.t()).t() + mean).t();
                 }
-                //            });
+            });
+        }
 
-            }
 
-            /**
+        /**
+         * @brief setSamplesCount
+         * @param sc
+         */
+        void setSamplesCount(const unsigned int&sc)
+        {
+            setSamplesRand(sc);
+        }
+
+        /**
          * @brief samplescount
          * @return
          */
+        unsigned int samplescount() const
+        {
+            return _samples_count;
+        }
 
-            unsigned int samplescount() const
+    protected:
+
+        void setSamplesRand(const unsigned int&sc)
+        {
+            _samples_count = sc;
+
+            _rs = arma::randu<vec>(sc);
+            _pt = arma::randn<mat>(sc, Dim);
+
+            // get scalings for each point onto the surface of a unit hypersphere fac = sum(pt(:,:)'.^2);
+            _fac = sum(square(_pt.t())).t();
+
+
+            // calculate scaling for each point to be within the unit hypersphere with radii rs
+            // fac = (rs.^(1/ndims)) ./ sqrt(fac');
+            for(unsigned int i=0; i<_rs.n_elem; i++)
             {
-                return _samples_count;
+                _fac(i) = std::pow(_rs(i), 1.0/Dim) / std::sqrt(_fac(i));
             }
+        }
 
-            protected:
-            const unsigned int _samples_count;
+    protected:
+        unsigned int _samples_count;
 
-            // Auxiliar vector and matrixs
-            const vec _rs;
-            const mat _pt;
+        // Auxiliar vector and matrixs
+        vec _rs;
+        mat _pt;
 
-            vec _fac;
+        vec _fac;
 
-        };
+};
 
 #endif // SIGMAPOINTS_HPP
 

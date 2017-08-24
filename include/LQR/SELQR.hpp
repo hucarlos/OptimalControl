@@ -182,9 +182,10 @@ class SELQR : public BasicLQR<xDim, uDim>
                     // If something goes wrong try to start again
                     if(std::isnan(this->getAccum()) || (!isfinite(this->getAccum())) )
                     {
-                        
+
                         if(this->vis)
                         {
+                            std::cout<<"Numerical issue";
                             this->printProgress();
                         }
                         
@@ -198,9 +199,10 @@ class SELQR : public BasicLQR<xDim, uDim>
                 }
                 catch(std::exception&e)
                 {
-                    
+
                     if(this->vis)
                     {
+                        std::cout<<"Exception: "<<e.what()<<endl;
                         this->printProgress();
                     }
                     newCost  = 0.0;
