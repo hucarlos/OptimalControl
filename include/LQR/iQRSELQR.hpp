@@ -215,6 +215,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
             estimateEpsilon();
 
             initRadius *= 0.5;
+//            initRadius %= decreceFactors;
 
             if(this->vis)
                 std::cout<<"Radius :"<<initRadius.t();

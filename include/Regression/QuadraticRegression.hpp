@@ -108,7 +108,7 @@ class QuadraticRegression
                 mat esamples;
                 if(_parallel)
                 {
-                    ellipPoints.getSamplesParallel(mean, cov, esamples);
+                    ellipPoints.getSamples(mean, cov, esamples);
                 }
                 else
                 {
