@@ -51,7 +51,9 @@ class Quadrotor: public BasicSystem<12,4>
                 xDot.subvec(0,2) = v;
 
                 // \dot{v} = [0,0,-g]^T + R*exp([r])*[0,0,(f_1 + f_2 + f_3 + f_4) / m]^T;
-                vec::fixed<3>temp = -gravity*eZ + arma::expmat(skewSymmetric(r)) * ((u[0]+u[1]+u[2]+u[3])/mass)*eZ - dragConst*v/mass;
+//                vec::fixed<3>temp = -gravity*eZ + arma::expmat(skewSymmetric(r)) * ((u[0]+u[1]+u[2]+u[3])/mass)*eZ - dragConst*v/mass;
+                vec::fixed<3>temp = -gravity*eZ + expSkewSym(r) * ((u[0]+u[1]+u[2]+u[3])/mass)*eZ - dragConst*v/mass;
+
                 xDot.subvec(3, 5) = temp;
 
                 // \dot{r} = w + 0.5*skewSymmetric(r)*w + (1.0/tr(~r*r))*(1.0 - 0.5*sqrt(tr(~r*r))/tan(0.5*sqrt(tr(~r*r))))*skewSymmetric(r)*(skewSymmetric(r)*w)
