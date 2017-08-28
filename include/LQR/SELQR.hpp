@@ -175,6 +175,7 @@ class SELQR : public BasicLQR<xDim, uDim>
                     }
 
                     oldCost = newCost;
+                    iters2 = iter;
 
                     // Set the parameters to the new values for every iteration
                     setParameters();
@@ -538,6 +539,8 @@ class SELQR : public BasicLQR<xDim, uDim>
         std::vector< StateMatrix >S;
         std::vector< State>s;
         std::vector<double>scalar_s;
+
+        unsigned int iters2;
 
 
 };

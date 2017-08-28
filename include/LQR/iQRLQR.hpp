@@ -150,7 +150,15 @@ class iQRLQR : public iLQR<xDim, uDim>
         {
 
             toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
-            regularize<xDim + uDim>(M, minEig, factEig);
+
+            if(this->iterations() < 5)
+            {
+                regularize<xDim + uDim>(M, minEig, 100);
+            }
+            else
+            {
+                regularize<xDim + uDim>(M, minEig, factEig);
+            }
         }
 
         /**

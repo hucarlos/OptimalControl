@@ -84,6 +84,7 @@ void regularize(mat &Q, const double&epsilon, const double&factor)
         vec eigval;
         mat eigvec;
 
+
         if( eig_sym(eigval, eigvec, Q, "std"))
         {
             double max = eigval.max();
@@ -431,6 +432,24 @@ inline mat::fixed<3,3> skewSymmetric(const vec::fixed<3>& vector)
     return result;
 }
 
+template <uword Dim>
+inline mat::fixed<Dim, Dim> expSkewSym(const vec::fixed<Dim>&q)
+{
+    const mat::fixed<Dim, Dim>skew = skewSymmetric(q);
+    const double x = arma::norm(q, 2);
+
+    double sine     = (std::sin(x)/x);
+    double cosine   = (1.0 - std::cos(x))/(x*x);
+
+    if(x <= 1.0e-6)
+    {
+            sine    = 1.0;
+            cosine  = 0.5;
+    }
+
+    mat::fixed<Dim, Dim> result = eye<mat>(Dim, Dim) + sine*skew + cosine*skew*skew;
+    return result;
+}
 
 // Matrix exponentiation
 #define _MATRIX_B0 1729728e1

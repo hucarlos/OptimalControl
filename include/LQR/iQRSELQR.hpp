@@ -189,7 +189,14 @@ class iQRSELQR : public SELQR<xDim, uDim>
         {
 
             toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
-            regularize<xDim + uDim>(M, minEig, factEig);
+            if(this->iters2 < 5)
+            {
+                regularize2<xDim + uDim>(M, minEig, 100);
+            }
+            else
+            {
+                regularize<xDim + uDim>(M, minEig, factEig);
+            }
         }
 
 

@@ -120,8 +120,6 @@ int main(int argc, char *argv[])
 
         xStart = -xGoal;
 
-
-
         double radius = arma::norm(xStart - xGoal, 2);
         if(radius < 7.1)
         {
@@ -188,7 +186,7 @@ int main(int argc, char *argv[])
             qrselqr.setInitRadius(initRadius);
             qrselqr.setEpsilon(epsilon);
 
-            ExtenedState decrese = setDecreceFactors(0.9, 0.9, 0.1, 0.1, 0.9);
+            ExtenedState decrese = setDecreceFactors(0.9, 0.9, 0.9, 0.9, 0.9);
             qrselqr.setDecreceFactors(decrese);
             qrselqr.setMinEig(0.0);
             qrselqr.setFactEig(0.1);
@@ -227,7 +225,7 @@ int main(int argc, char *argv[])
                         <<"Time (ms): "  << std::left << setw(8)    << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
                         <<"Cost: "       << std::left << setw(13)   << selqr.getAccum()   << std::left << setw(13) << qrselqr.getAccum()<<'\t'
                         <<"Iters: "      << std::left << setw(7)    << selqr.iterations() << std::left << setw(7)  << qrselqr.iterations()<<'\t'
-                        <<"(%)"          << std::left << setw(7)    <<(double(winner)/samplek)*100     <<' '<< xGoal.subvec(0,2).t();
+                        <<"(%)"          << std::left << setw(7)    <<(double(winner)/samplek)*100     <<' '<< radius<<' '<<xGoal.subvec(0,2).t();
 
             out << samplek <<'\t'
                 << std::left << setw(8) << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
