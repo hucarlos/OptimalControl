@@ -26,7 +26,7 @@ class QuadraticRegression
          */
         QuadraticRegression(): samplingMode(GAUSSIAN_S), samplingFactor(1),
             seed(0),
-            _unknown(((Dim * (Dim+1))/2) + Dim)
+            _unknown(((Dim * (Dim+1))/2) + Dim + 1)
         {
             this->updateSamplesMat();
         }
@@ -38,7 +38,7 @@ class QuadraticRegression
         QuadraticRegression(SAMPLING_MODE mode): samplingMode(mode),
             samplingFactor(1),
             seed(0),
-            _unknown(((Dim * (Dim+1))/2) + Dim)
+            _unknown(((Dim * (Dim+1))/2) + Dim + 1)
         {
             this->updateSamplesMat();
         }
@@ -50,7 +50,7 @@ class QuadraticRegression
          */
         QuadraticRegression(SAMPLING_MODE mode, const unsigned int&sf):  samplingMode(mode), samplingFactor(sf),
             seed(0),
-            _unknown(((Dim * (Dim+1))/2) + Dim)
+            _unknown(((Dim * (Dim+1))/2) + Dim + 1)
         {
           this->updateSamplesMat();
         }
@@ -64,7 +64,7 @@ class QuadraticRegression
         QuadraticRegression(SAMPLING_MODE mode,  const unsigned int&sf, const unsigned int&s):
             samplingMode(mode), samplingFactor(sf),
             seed(s),
-            _unknown(((Dim * (Dim+1))/2) + Dim)
+            _unknown(((Dim * (Dim+1))/2) + Dim + 1)
         {
             this->updateSamplesMat();
         }
@@ -253,7 +253,7 @@ class QuadraticRegression
 
             scalar = nominal_value;
 
-            double error = arma::norm(X*sol - y, 2) / norm(sol, 2); //  L2 norm
+            double error = arma::norm(X*sol - y, 2) / norm(y, 2); //  L2 norm
 
             // return relative error
             return error;

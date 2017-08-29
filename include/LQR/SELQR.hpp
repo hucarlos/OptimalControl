@@ -71,7 +71,7 @@ class SELQR : public BasicLQR<xDim, uDim>
 
             for (unsigned int iter = 0; iter < maxIter; ++iter)
             {
-
+                iters2 = iter;
                 try
                 {
                     this->setIteratios(iter);
@@ -175,7 +175,7 @@ class SELQR : public BasicLQR<xDim, uDim>
                     }
 
                     oldCost = newCost;
-                    iters2 = iter;
+
 
                     // Set the parameters to the new values for every iteration
                     setParameters();

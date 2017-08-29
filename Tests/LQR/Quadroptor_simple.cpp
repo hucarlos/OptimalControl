@@ -79,18 +79,15 @@ int main(int argc, char *argv[])
     obstacles_cost.setScaleFactor(scaleFactor);
     obstacles_cost.setObstacleFactor(obstacleFactor);
 
-    const unsigned int samples = 100;
+    const unsigned int samples = 50;
     unsigned int samplek = 1;
 
     unsigned int winner = 0;
 
     bool vis = false;
 
-    time_t seed = 1503549301; time(0);
+    time_t seed =  1503903180;time(0);
     srand(seed);
-
-    // Create distributions for sampling
-    std::default_random_engine generator(seed);
 
     std::cout<<"Seed: "<<seed<<endl<<endl;
 
@@ -106,22 +103,15 @@ int main(int argc, char *argv[])
         xGoal(((random / 4) + 1) % 3)   = ((random % 4) / 2 == 0 ? 2.25 : -2.25) + ((double) rand() / RAND_MAX) * 0.02 - 0.01;
         xGoal(((random / 4) + 2) % 3)   = ((random % 4) % 2 == 0 ? 2.25 : -2.25) + ((double) rand() / RAND_MAX) * 0.02 - 0.01;
 
-//        xGoal(0) = 2.2549;
-//        xGoal(1) = 1.7714;
-//        xGoal(2) = -2.2531;
+//        xGoal(0) = 2.2534;
+//        xGoal(1) = 2.2401;
+//        xGoal(2) = -2.1055;
 
-        std::uniform_real_distribution<double> goal_x(-2.25, 2.25);
-        std::uniform_real_distribution<double> goal_y(-2.25, 2.25);
-        std::uniform_real_distribution<double> goal_z(-2.25, 2.25);
-
-        xGoal(0) = goal_x(generator);
-        xGoal(1) = goal_y(generator);
-        xGoal(2) = goal_z(generator);
 
         xStart = -xGoal;
 
         double radius = arma::norm(xStart - xGoal, 2);
-        if(radius < 7.1)
+        if(radius < 7.0)
         {
             continue;
         }
@@ -154,13 +144,13 @@ int main(int argc, char *argv[])
         try
         {
             ExtenedState initRadius;
-            initRadius.subvec(0, 2)     = 1.0e-5  * ones<vec>(3);
-            initRadius.subvec(3, 5)     = 1.0e-5  * ones<vec>(3);
-            initRadius.subvec(6, 8)     = 1.0e-7  * ones<vec>(3);
-            initRadius.subvec(9, 11)    = 1.0e-7  * ones<vec>(3);
-            initRadius.subvec(12, 15)   = 1.0e-5  * ones<vec>(4);
+            initRadius.subvec(0, 2)     = 1.0e-1  * ones<vec>(3);
+            initRadius.subvec(3, 5)     = 1.0e-1  * ones<vec>(3);
+            initRadius.subvec(6, 8)     = 1.0e-2  * ones<vec>(3);
+            initRadius.subvec(9, 11)    = 1.0e-2  * ones<vec>(3);
+            initRadius.subvec(12, 15)   = 1.0e-1  * ones<vec>(4);
 
-            double epsilon      = 1.0e-5;
+            double epsilon      = 1.0e-2;
 
             // ========================================= SELQR ALGORITHMS =============================
 
@@ -186,14 +176,14 @@ int main(int argc, char *argv[])
             qrselqr.setInitRadius(initRadius);
             qrselqr.setEpsilon(epsilon);
 
-            ExtenedState decrese = setDecreceFactors(0.9, 0.9, 0.9, 0.9, 0.9);
+            ExtenedState decrese = setDecreceFactors(0.5, 0.5, 0.5, 0.5, 0.5);
             qrselqr.setDecreceFactors(decrese);
             qrselqr.setMinEig(0.0);
             qrselqr.setFactEig(0.1);
 
             // Regression parameters
-            qrselqr.setSamplingMode(SAMPLING_MODE::GAUSSIAN_S);
-            qrselqr.setSamplingFactor(3);
+            qrselqr.setSamplingMode(SAMPLING_MODE::ELLIPSOID_S);
+            qrselqr.setSamplingFactor(2);
             qrselqr.setParallel(true);
 
             t1=timeNow();
@@ -208,18 +198,18 @@ int main(int argc, char *argv[])
             //            printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
             double diff = std::abs(selqr.getAccum() - qrselqr.getAccum());
-            if(selqr.getAccum() > qrselqr.getAccum())
+
+            if( false /*diff < 1.0*/)
+            {
+                continue;
+            }
+
+            else if(selqr.getAccum() > qrselqr.getAccum())
             {
                 winner ++;
             }
 
-            else if (diff < 1.0)
-            {
-                if(selqr.iterations() < selqr.iterations())
-                {
-                    winner++;
-                }
-            }
+
 
             std::cout << samplek <<'\t'
                         <<"Time (ms): "  << std::left << setw(8)    << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
