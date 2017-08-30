@@ -189,14 +189,16 @@ class iQRSELQR : public SELQR<xDim, uDim>
         {
 
             toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
-            if(this->iters2 < 5)
+
+            if(this->iters2 < 10)
             {
-                regularize2<xDim + uDim>(M, minEig, 100);
+                regularize<xDim + uDim>(M, minEig, 100);
             }
             else
             {
                 regularize<xDim + uDim>(M, minEig, factEig);
             }
+
         }
 
 
@@ -218,10 +220,11 @@ class iQRSELQR : public SELQR<xDim, uDim>
          */
         void setInitialConditions(const std::vector<Control>&nominalU)
         {
-            epsilon *= 0.95;
+            epsilon *= 0.1;
             estimateEpsilon();
 
             initRadius *= 0.5;
+//            initRadius %= decreceFactors;
 
             if(this->vis)
                 std::cout<<"Radius :"<<initRadius.t();
