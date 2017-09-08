@@ -37,13 +37,14 @@ int main(int argc, char *argv[])
 
     int winner = 0;
 
-    DDR robot(1.0/6.0);
+    DDR robot(1.0/15.0);
 
     // Create distributions for sampling
-    std::default_random_engine generator(26);
+    std::default_random_engine generator(0);
 
-    unsigned int countExperiments = 100;
+    unsigned int countExperiments = 1;
     unsigned int experiment = 0;
+    bool print = false;
 
     if(argc >=2)
     {
@@ -119,17 +120,17 @@ int main(int argc, char *argv[])
             SystemCost<XDIM, UDIM>system_cost(&control_cost, &obstacles_cost);
 
             // Same radius and epsilon for all examples
-            const double epsilon = 1.0e-2;
+            const double epsilon = 1.0e-1;
             vec::fixed<XDIM + UDIM>radius = ones<vec>(XDIM + UDIM);
-            radius(0) = 1;
-            radius(1) = 1;
-            radius(2) = 0.1;
-            radius(3) = 1;
-            radius(4) = 1;
+            radius(0) = 1.0e-1;
+            radius(1) = 1.0e-1;
+            radius(2) = 1.0e-2;
+            radius(3) = 1.0e-1;
+            radius(4) = 1.0e-1;
 
             // ========================================= SELQR ALGORITHMS =============================
 
-            SELQR<XDIM, UDIM>selqr(ell, &robot, &init_cost, &system_cost, &final_cost, false);
+            SELQR<XDIM, UDIM>selqr(ell, &robot, &init_cost, &system_cost, &final_cost, print);
             tSELQR=timeNow();
             selqr.estimate(xStart, max_iter, delta, lNominal);
             double timeSELQR = duration(timeNow() - tSELQR);
@@ -138,12 +139,12 @@ int main(int argc, char *argv[])
             vec::fixed<XDIM + UDIM>decres = 0.95 * ones<vec>(XDIM + UDIM);
             decres(2) = 0.1;
 
-            iQRSELQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, false);
+            iQRSELQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, print);
             qrselqr.setInitRadius(radius);
             qrselqr.setEpsilon(epsilon);
 
-            qrselqr.setSamplingMode(SAMPLING_MODE::SIGMA_S);
-            qrselqr.setSamplingFactor(1);
+            qrselqr.setSamplingMode(SAMPLING_MODE::ELLIPSOID_S);
+            qrselqr.setSamplingFactor(3);
 
             qrselqr.setDecreceFactors(decres);
             qrselqr.setMinEig(0.0);

@@ -189,15 +189,16 @@ class iQRSELQR : public SELQR<xDim, uDim>
         {
 
             toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
+            regularizeMax<xDim + uDim>(M, minEig, factEig);
 
-            if(this->iters2 < 10)
-            {
-                regularize<xDim + uDim>(M, minEig, 100);
-            }
-            else
-            {
-                regularize<xDim + uDim>(M, minEig, factEig);
-            }
+//            if(this->iters2 < 5)
+//            {
+//                regularize<xDim + uDim>(M, minEig, 100);
+//            }
+//            else
+//            {
+//                regularize<xDim + uDim>(M, minEig, factEig);
+//            }
 
         }
 
@@ -339,7 +340,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
         double estimateEpsilon()
         {
 
-            epsilon = std::max(1.0e-10, epsilon);
+            epsilon = std::max(1.0e-3, epsilon);
             return epsilon;
         }
 
