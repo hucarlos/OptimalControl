@@ -1,22 +1,27 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+def reject_outliers(data, m=2):
+    return data[abs(data - np.mean(data)) < m * np.std(data)]
+    
+
 if __name__ == '__main__':
+    
+    data = np.loadtxt('WinsrSELQRChol.txt')
 
-    data = np.loadtxt("WinsrSELQRChol.txt")
-
-    # Filter data using np.isnan
-    # mask = ~np.isinf(data)
-    # data = [data[m] for d, m in zip(data.T, mask.T)]
     # print data.shape
-
+    # data = [data[m] for d, m in zip(data.T, mask.T)]
+    # mask = ~np.isinf(data)
+    # Filter data using np.isnan
     times = [data[:,0], data[:, 1]]
+    
+    mask = ~np.isinf(data[:,2])
 
     costSELQR = data[:,2]
-    costSELQR = costSELQR[~np.isnan(costSELQR)]
+    costSELQR = costSELQR[mask]
 
     costRSELQR = data[:, 3]
-    costRSELQR = costRSELQR[~np.isnan(costSELQR)]
+    costRSELQR = costRSELQR[mask]
 
     cost  = [costSELQR, costRSELQR]
 
@@ -33,7 +38,10 @@ if __name__ == '__main__':
     ax2.boxplot(times, 0, '')
     ax2.set_xticklabels(['SELQR', 'QRSELQR'])
     ax2.set_ylabel("Time (ms)")
+    
 
-    print np.mean(data, axis=0)
+    print 'Mean iters: ', np.mean(data[:,4]), np.mean(data[:, 5])
+    print 'Mean costs: ', np.mean(costSELQR), np.mean(costRSELQR)
+    print 'Mean time: ', np.mean(data[:,0]), np.mean(data[:,1])
 
     plt.show()
