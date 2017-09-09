@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 if __name__ == '__main__':
 
-    data = np.loadtxt("QR_GAUSS.txt")
+    data = np.loadtxt("QR.txt")
     times = [data[:,1], data[:, 2]]
 
     iters = [data[:,5], data[:, 6]]

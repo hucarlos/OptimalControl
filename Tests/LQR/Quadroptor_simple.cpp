@@ -50,10 +50,10 @@ int main(int argc, char *argv[])
 {
     TimeVar t1;
 
-    Quadrotor robot(1.0/20.0);
+    Quadrotor robot(1.0/25.0);
 
 
-    const unsigned int ell      = 150;
+    const unsigned int ell      = 200;
     const double delta          = 1.0e-4;
     const unsigned int max_iter = 100;
 
@@ -144,11 +144,11 @@ int main(int argc, char *argv[])
         try
         {
             ExtenedState initRadius;
-            initRadius.subvec(0, 2)     = 1.0e-1  * ones<vec>(3);
-            initRadius.subvec(3, 5)     = 1.0e-1  * ones<vec>(3);
-            initRadius.subvec(6, 8)     = 1.0e-2  * ones<vec>(3);
-            initRadius.subvec(9, 11)    = 1.0e-2  * ones<vec>(3);
-            initRadius.subvec(12, 15)   = 1.0e-1  * ones<vec>(4);
+            initRadius.subvec(0, 2)     = 1.0e-3  * ones<vec>(3);
+            initRadius.subvec(3, 5)     = 1.0e-3 * ones<vec>(3);
+            initRadius.subvec(6, 8)     = 1.0e-5  * ones<vec>(3);
+            initRadius.subvec(9, 11)    = 1.0e-3  * ones<vec>(3);
+            initRadius.subvec(12, 15)   = 1.0e-3  * ones<vec>(4);
 
             double epsilon      = 1.0e-2;
 
@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
             qrselqr.setInitRadius(initRadius);
             qrselqr.setEpsilon(epsilon);
 
-            ExtenedState decrese = setDecreceFactors(0.5, 0.5, 0.5, 0.5, 0.5);
+            ExtenedState decrese = setDecreceFactors(0.95, 0.95, 0.95, 0.95, 0.95);
             qrselqr.setDecreceFactors(decrese);
             qrselqr.setMinEig(0.0);
             qrselqr.setFactEig(0.1);

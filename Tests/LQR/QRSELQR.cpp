@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
     int winner = 0;
 
-    DDR robot(1.0/15.0);
+    DDR robot(0.1);
 
     // Create distributions for sampling
     std::default_random_engine generator(0);
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
         try
         {
 
-            const unsigned int ell      = 100;
+            const unsigned int ell      = 150;
             const double delta          = 1.0e-4;
             const unsigned int max_iter = 100;
 
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
             const Control uNominal      = zeros<vec>(UDIM);
 
 
-            const double obstacleFactor = 1.0;
+            const double obstacleFactor = 1;
             const double scaleFactor    = 1.0;
             const double robotRadius    = 1.675;
 
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
             SystemCost<XDIM, UDIM>system_cost(&control_cost, &obstacles_cost);
 
             // Same radius and epsilon for all examples
-            const double epsilon = 1.0e-1;
+            const double epsilon = 1.0e-2;
             vec::fixed<XDIM + UDIM>radius = ones<vec>(XDIM + UDIM);
             radius(0) = 1.0e-1;
             radius(1) = 1.0e-1;
@@ -144,18 +144,24 @@ int main(int argc, char *argv[])
             qrselqr.setEpsilon(epsilon);
 
             qrselqr.setSamplingMode(SAMPLING_MODE::ELLIPSOID_S);
-            qrselqr.setSamplingFactor(3);
+            qrselqr.setSamplingFactor(1);
 
             qrselqr.setDecreceFactors(decres);
             qrselqr.setMinEig(0.0);
-            qrselqr.setFactEig(0.1);
+            qrselqr.setFactEig(0.3);
             qrselqr.setParallel(false);
 
             tQRSELQR=timeNow();
             qrselqr.estimate(xStart, max_iter, delta, lNominal);
             double timeQRSELQR = duration(timeNow() - tQRSELQR);
 
-            if(selqr.getAccum() > qrselqr.getAccum())
+           const double accumSELQR = selqr.getAccum();
+           const double accumRSELQR = qrselqr.getAccum();
+
+           if((accumSELQR)
+
+
+            if(  )
             {
                 winner ++;
                 win << timeSELQR            <<'\t'   << timeQRSELQR<<'\t'
