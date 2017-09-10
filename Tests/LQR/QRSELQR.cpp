@@ -52,7 +52,9 @@ int main(int argc, char *argv[])
     }
 
     ofstream out("Cords.txt", std::ofstream::out);
-    ofstream win("WinsrSELQRChol.txt", std::ofstream::out);
+
+    string fileName = "Results.txt";
+    ofstream win(fileName, std::ofstream::out);
 
     State xStart, xGoal;
 
@@ -120,13 +122,13 @@ int main(int argc, char *argv[])
             SystemCost<XDIM, UDIM>system_cost(&control_cost, &obstacles_cost);
 
             // Same radius and epsilon for all examples
-            const double epsilon = 1.0e-2;
+            const double epsilon = 1.0e-1;
             vec::fixed<XDIM + UDIM>radius = ones<vec>(XDIM + UDIM);
-            radius(0) = 1.0e-1;
-            radius(1) = 1.0e-1;
+            radius(0) = 1.0e1;
+            radius(1) = 1.0e1;
             radius(2) = 1.0e-2;
-            radius(3) = 1.0e-1;
-            radius(4) = 1.0e-1;
+            radius(3) = 1.0e1;
+            radius(4) = 1.0e1;
 
             // ========================================= SELQR ALGORITHMS =============================
 
@@ -148,36 +150,39 @@ int main(int argc, char *argv[])
 
             qrselqr.setDecreceFactors(decres);
             qrselqr.setMinEig(0.0);
-            qrselqr.setFactEig(0.3);
+            qrselqr.setFactEig(0.1);
             qrselqr.setParallel(false);
 
             tQRSELQR=timeNow();
             qrselqr.estimate(xStart, max_iter, delta, lNominal);
             double timeQRSELQR = duration(timeNow() - tQRSELQR);
 
-           const double accumSELQR = selqr.getAccum();
-           const double accumRSELQR = qrselqr.getAccum();
+            const double accumSELQR  = selqr.getAccum();
+            const double accumRSELQR = qrselqr.getAccum();
 
-           if((accumSELQR)
+            if((accumSELQR > 5000) || (accumRSELQR>5000))
+            {
+                continue;
+            }
 
-
-            if(  )
+            if(accumSELQR>accumRSELQR)
             {
                 winner ++;
-                win << timeSELQR            <<'\t'   << timeQRSELQR<<'\t'
-                    << selqr.getAccum()     <<'\t'   << qrselqr.getAccum()<<'\t'
-                    << selqr.iterations()   <<'\t'   << qrselqr.iterations()<<'\t'
-                    << 0.0                  <<'\t'   << qrselqr.getEpsilon() << endl;
-            }
-            else
-            {
-                out<<xStart(0)<<' '<<xStart(1)<<' '<<(180/M_PI)*xStart(2)<<' '<<xGoal(0)<<' '<<xGoal(1)<<' '<<(180/M_PI)*xGoal(2)<<endl;
             }
 
+
+            win << timeSELQR            <<'\t'   << timeQRSELQR<<'\t'
+                << selqr.getAccum()     <<'\t'   << qrselqr.getAccum()<<'\t'
+                << selqr.iterations()   <<'\t'   << qrselqr.iterations()<<'\t'
+                << 0.0                  <<'\t'   << qrselqr.getEpsilon() << endl;
+
+            out<<xStart(0)<<' '<<xStart(1)<<' '<<(180/M_PI)*xStart(2)<<' '<<xGoal(0)<<' '<<xGoal(1)<<' '<<(180/M_PI)*xGoal(2)<<endl;
+
+
             std::cout << experiment <<'\t'
-                                    <<"Time (ms): "  << std::left << setw(8) << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
-                                    <<"Cost: "       << std::left << setw(13) << selqr.getAccum()  << std::left << setw(13) << qrselqr.getAccum()<<'\t'
-                                    <<"Iters: "      << std::left << setw(7) << selqr.iterations() << std::left << setw(7) << qrselqr.iterations()<<endl;
+                      <<"Time (ms): "  << std::left << setw(8) << timeSELQR <<' '    << std::left << setw(13) << timeQRSELQR <<'\t'
+                     <<"Cost: "       << std::left << setw(13) << selqr.getAccum()  << std::left << setw(13) << qrselqr.getAccum()<<'\t'
+                    <<"Iters: "      << std::left << setw(7) << selqr.iterations() << std::left << setw(7) << qrselqr.iterations()<<endl;
 
 
             experiment++;
