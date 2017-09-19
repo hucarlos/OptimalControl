@@ -24,16 +24,18 @@ typedef arma::vec::fixed<UDIM>Control;
 typedef arma::mat::fixed<XDIM, XDIM>StateMat;
 typedef arma::mat::fixed<UDIM, UDIM>ControlMat;
 
-typedef arma::mat::fixed<XDIM + UDIM, 1>ExtenedState;
+typedef arma::vec::fixed<XDIM + UDIM>ExtendedState;
 
 typedef arma::mat::fixed<UDIM, XDIM>ControlStateMatrix;
+
+typedef typename QuadraticRegression<XDIM + UDIM>::SAMPLING_MODE SAMPLING_MODE;
 
 
 int main(int argc, char *argv[])
 {
     TimeVar t1;
 
-    DDR robot(1.0/6.0);
+    DDR robot(0.1);
 
     if(argc<2)
     {
@@ -66,11 +68,12 @@ int main(int argc, char *argv[])
 
     const string mapfile        = params.mapName;
 
-    // For saving results
+    // For saving reslts
     std::vector<State>systemPath(ell +1);
     std::vector<Control>nominalControls(ell);
     std::string filename;
-    const std::string ext(".txt");
+    const int index = 8;
+    const std::string ext = "Epsilon" + to_string(index) + ".txt";
 
     //============================ Set the obstacles =========================
     arma::vec2 bottomLeft, topRight;
@@ -96,26 +99,37 @@ int main(int argc, char *argv[])
 
     SystemCost<XDIM, UDIM>system_cost(&control_cost, &obstacles_cost);
 
+
+
     // ========================================= SELQR ALGORITHMS =============================
 
     SELQR<XDIM, UDIM>selqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
-//    t1=timeNow();
-//    selqr.estimate(xStart, max_iter, delta, lNominal);
-//    std::cout<<"SELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl<<endl;
+    t1=timeNow();
+    selqr.estimate(xStart, max_iter, delta, lNominal);
+    std::cout<<"SELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl<<endl<<endl;
 
-//    filename = selqr.getName() + ext;
-//    selqr.estimatePath(xStart);
+    filename = selqr.getName() + ext;
+    selqr.estimatePath(xStart);
 
-//    selqr.getNominalState(systemPath);
-//    selqr.getNominalControl(nominalControls);
+    selqr.getNominalState(systemPath);
+    selqr.getNominalControl(nominalControls);
 
-//    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
+    printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
     // ========================================= iQRLQR ALGORITHMS =============================
 
-    iQRLQR<XDIM, UDIM>iqrlqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
-    iqrlqr.setInitRadius(params.iQRLQR.initRadius);
-    iqrlqr.setEpsilon(params.iQRLQR.epsilon);
+//    iQRLQR<XDIM, UDIM>iqrlqr(ell, &robot, &init_cost, &system_cost, &final_cost, true);
+//    iqrlqr.setInitRadius(params.iQRLQR.initRadius);
+//    iqrlqr.setEpsilon(params.iQRLQR.epsilon);
+
+//    vec::fixed<XDIM + UDIM>decres1 = 0.5 * ones<vec>(XDIM + UDIM);
+//    decres1(2) = 0.1;
+
+//    iqrlqr.setSamplingMode(SAMPLING_MODE::ELLIPSOID_S);
+//    iqrlqr.setSamplingFactor(1);
+//    iqrlqr.setDecreceFactors(decres1);
+//    iqrlqr.setMinEig(0.0);
+//    iqrlqr.setFactEig(0.1);
 
 //    t1=timeNow();
 //    iqrlqr.estimate(xStart, max_iter, delta, lNominal);
@@ -136,6 +150,18 @@ int main(int argc, char *argv[])
     qrselqr.setInitRadius(params.iQRSELQR.initRadius);
     qrselqr.setEpsilon(params.iQRSELQR.epsilon);
 
+    qrselqr.setSamplingMode(SAMPLING_MODE::ELLIPSOID_S);
+    qrselqr.setSamplingFactor(3);
+
+    vec::fixed<XDIM + UDIM>decres2 = 0.75 * ones<vec>(XDIM + UDIM);
+    decres2(0) = 0.6;
+    decres2(2) = 0.1;
+
+    qrselqr.setDecreceFactors(decres2);
+    qrselqr.setMinEig(0.0);
+    qrselqr.setFactEig(0.1);
+    qrselqr.setParallel(false);
+
     t1=timeNow();
     qrselqr.estimate(xStart, max_iter, delta, lNominal);
     std::cout<<"iQRSELQR TIME(ms) "<<duration(timeNow() - t1)<<std::endl;
@@ -148,7 +174,20 @@ int main(int argc, char *argv[])
 
     printPathControls<XDIM, UDIM>(systemPath, nominalControls, filename);
 
+    std::vector< arma::vec::fixed<XDIM + UDIM> >vec_radius;
+    qrselqr.getVecRadius(vec_radius);
 
+    string r_name = "Radius" + ext;
+    ofstream outradius(r_name);
+    for(unsigned int i=0; i<vec_radius.size(); i++)
+    {
+        ExtendedState rad = vec_radius.at(i);
+        for(int j=0; j<rad.n_elem; j++)
+        {
+            outradius<<rad(j)<<' ';
+        }
+        outradius<<endl;
+    }
 
     return 0;
 

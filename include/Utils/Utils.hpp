@@ -351,6 +351,101 @@ bool printPathControls(const std::vector< arma::vec::fixed<xDim> >&path,
 }
 
 
+/**
+ * @brief printPathControls
+ * @param path
+ * @param controls
+ * @param filename
+ * @return
+ */
+template<int xDim, int uDim>
+bool loadPathControls(std::vector< arma::vec::fixed<xDim> >&path,
+                      std::vector< arma::vec::fixed<uDim> >&controls,
+                       const std::string&filename)
+{
+    FILE * pFile;
+    pFile = fopen (filename.c_str(),"r");
+
+    if(pFile == NULL)
+    {
+        return false;
+    }
+
+    for(unsigned int i=0; i<controls.size(); i++)
+    {
+        const arma::vec::fixed<xDim>&x = path[i];
+        const arma::vec::fixed<uDim>&c = controls[i];
+
+
+        for(int j=0; j<xDim; j++)
+        {
+            fscanf(pFile, "%lf\t", x(j));
+        }
+
+        for(int j=0; j<uDim; j++)
+        {
+            fscanf(pFile, "%lf\t", c(j));
+        }
+
+        fscanf(pFile, "\n");
+    }
+
+
+    // Last point
+    const int ell = path.size()-1;
+    const arma::vec::fixed<xDim>&xell = path[ell];
+
+    for(int j=0; j<xDim; j++)
+    {
+        fscanf(pFile, "%lf\t", xell(j));
+    }
+
+    for(int j=0; j<uDim; j++)
+    {
+        fscanf(pFile, "%lf\t", 0.0);
+    }
+
+    fclose(pFile);
+
+    return true;
+}
+
+template<uword xDim, uword uDim>
+void vector2ArmaMat(const std::vector< arma::vec::fixed<xDim> >&path,
+                    const std::vector< arma::vec::fixed<uDim> >&controls,
+                    arma::mat&out)
+{
+    const uword columns = xDim + uDim;
+    const uword rows    = path.size();
+
+    out = zeros<mat>(rows, columns);
+
+    for(unsigned int i=0; i<controls.size(); i++)
+    {
+        const arma::vec::fixed<xDim>&x = path[i];
+        const arma::vec::fixed<uDim>&c = controls[i];
+
+        for(int j=0; j<xDim; j++)
+        {
+            out(i, j) = x(j);
+        }
+
+        for(int j=0; j<uDim; j++)
+        {
+            out(i, j+xDim) = c(j);
+        }
+    }
+
+    // Last point
+    const int ell = path.size()-1;
+    const arma::vec::fixed<xDim>&xell = path[ell];
+
+    for(int j=0; j<xDim; j++)
+    {
+        out(ell, j) = xell(j);
+    }
+
+}
 
 
 /**

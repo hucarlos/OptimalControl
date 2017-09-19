@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 
     ofstream out("Cords.txt", std::ofstream::out);
 
-    string fileName = "Results.txt";
+    string fileName = "Results4.txt";
     ofstream win(fileName, std::ofstream::out);
 
     State xStart, xGoal;
@@ -67,24 +67,26 @@ int main(int argc, char *argv[])
 
             const unsigned int ell      = 150;
             const double delta          = 1.0e-4;
-            const unsigned int max_iter = 100;
+            const unsigned int max_iter = 150;
 
 
             std::uniform_real_distribution<double> init_x(-20, 20);
-            std::uniform_real_distribution<double> init_y(-24, -40);
+            std::uniform_real_distribution<double> init_y(-25, -35);
             std::uniform_real_distribution<double> init_a(-M_PI, M_PI);
 
             std::uniform_real_distribution<double> final_x(-20, 20);
-            std::uniform_real_distribution<double> final_y(25, 40);
+            std::uniform_real_distribution<double> final_y(25, 35);
             std::uniform_real_distribution<double> final_a(-M_PI, M_PI);
 
             xStart(0) = init_x(generator);
             xStart(1) = init_y(generator);
             xStart(2) = init_a(generator);
 
-            xGoal(0) = final_x(generator);
-            xGoal(1) = final_y(generator);
-            xGoal(2) = final_a(generator);
+//            xGoal(0) = final_x(generator);
+//            xGoal(1) = final_y(generator);
+//            xGoal(2) = final_a(generator);
+
+            xGoal = -xStart;
 
             const ControlMat R          = 1.0    * eye<mat>(UDIM, UDIM);
             const StateMat Q            = 50.0   * eye<mat>(XDIM, XDIM);
@@ -124,11 +126,11 @@ int main(int argc, char *argv[])
             // Same radius and epsilon for all examples
             const double epsilon = 1.0e-1;
             vec::fixed<XDIM + UDIM>radius = ones<vec>(XDIM + UDIM);
-            radius(0) = 1.0e1;
-            radius(1) = 1.0e1;
-            radius(2) = 1.0e-2;
-            radius(3) = 1.0e1;
-            radius(4) = 1.0e1;
+            radius(0) = 1.0e-2;
+            radius(1) = 1.0e-2;
+            radius(2) = 1.0e-3;
+            radius(3) = 1.0e-2;
+            radius(4) = 1.0e-2;
 
             // ========================================= SELQR ALGORITHMS =============================
 
@@ -138,10 +140,12 @@ int main(int argc, char *argv[])
             double timeSELQR = duration(timeNow() - tSELQR);
 
             // ========================================= iQRSELQR ALGORITHMS =============================
-            vec::fixed<XDIM + UDIM>decres = 0.95 * ones<vec>(XDIM + UDIM);
+            vec::fixed<XDIM + UDIM>decres = 0.5 * ones<vec>(XDIM + UDIM);
             decres(2) = 0.1;
 
-            iQRSELQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, print);
+//            iQRLQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, false);
+
+                        iQRSELQR<XDIM, UDIM>qrselqr(ell, &robot, &init_cost, &system_cost, &final_cost, print);
             qrselqr.setInitRadius(radius);
             qrselqr.setEpsilon(epsilon);
 
@@ -160,7 +164,9 @@ int main(int argc, char *argv[])
             const double accumSELQR  = selqr.getAccum();
             const double accumRSELQR = qrselqr.getAccum();
 
-            if((accumSELQR > 5000) || (accumRSELQR>5000))
+            const double hight = 5000 * 2;
+
+            if((accumSELQR > hight) || (accumRSELQR>hight))
             {
                 continue;
             }

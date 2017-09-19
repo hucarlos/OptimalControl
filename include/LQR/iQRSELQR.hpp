@@ -38,6 +38,8 @@ class iQRSELQR : public SELQR<xDim, uDim>
 
             minEig  = 0.0;
             factEig = 0.1;
+
+            vec_radius.resize(ell, arma::zeros<vec>(xDim + uDim));
         }
 
         void quadratizeCost2Come(const State&xHat, const Control&uHat, const int&t,
@@ -73,7 +75,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
                                                                                   this, std::placeholders::_1));
             }
 
-            const double evalEpsilon = estimateEpsilon();
+            const double evalEpsilon = getEpsilon();
 
             const double lambda = 0.0;
 
@@ -82,6 +84,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
             {
 
                 error   = regression.getRegression(function, mean, M, m, scalar, radius, lambda);
+
                 decreceRadius(radius);
             }
             while(std::abs(error) > evalEpsilon);
@@ -149,7 +152,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
                                                                                   this, std::placeholders::_1));
             }
 
-            const double evalEpsilon = estimateEpsilon();
+            const double evalEpsilon = getEpsilon();
 
             const double lambda = 0.0;
             radius = initRadius;
@@ -157,7 +160,12 @@ class iQRSELQR : public SELQR<xDim, uDim>
             {
 
                 error   = regression.getRegression(function, mean, M, m, scalar, radius, lambda);
+
+                vec_radius.at(t) = radius;
+
                 decreceRadius(radius);
+
+
             }
             while(std::abs(error) > evalEpsilon);
 
@@ -189,16 +197,16 @@ class iQRSELQR : public SELQR<xDim, uDim>
         {
 
             toZero<xDim + uDim, xDim + uDim>(M, 1.0e-9);
-            regularizeMax<xDim + uDim>(M, minEig, factEig);
+//            regularizeMax<xDim + uDim>(M, minEig, factEig);
 
-//            if(this->iters2 < 5)
-//            {
-//                regularize<xDim + uDim>(M, minEig, 100);
-//            }
-//            else
-//            {
-//                regularize<xDim + uDim>(M, minEig, factEig);
-//            }
+            if(this->iters2 < 5)
+            {
+                regularize<xDim + uDim>(M, minEig, 100);
+            }
+            else
+            {
+                regularize<xDim + uDim>(M, minEig, factEig);
+            }
 
         }
 
@@ -221,7 +229,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
          */
         void setInitialConditions(const std::vector<Control>&nominalU)
         {
-            epsilon *= 0.1;
+//            epsilon *= 0.1;
             estimateEpsilon();
 
             initRadius *= 0.5;
@@ -340,7 +348,7 @@ class iQRSELQR : public SELQR<xDim, uDim>
         double estimateEpsilon()
         {
 
-            epsilon = std::max(1.0e-3, epsilon);
+            epsilon = std::max(1.0e-8, epsilon);
             return epsilon;
         }
 
@@ -478,6 +486,15 @@ class iQRSELQR : public SELQR<xDim, uDim>
             regression.setSeed(seed);
         }
 
+        /**
+         * @brief getRadius
+         * @param out
+         */
+        void getVecRadius(std::vector<ExtendedState>&vec_out) const
+        {
+            vec_out = vec_radius;
+        }
+
 
 protected:
 
@@ -491,6 +508,8 @@ protected:
 
 
         arma::vec::fixed<xDim+uDim>decreceFactors;
+
+        std::vector<ExtendedState>vec_radius;
 
         double minEig;
         double factEig;

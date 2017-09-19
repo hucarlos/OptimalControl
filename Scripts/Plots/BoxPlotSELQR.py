@@ -1,13 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-
-def reject_outliers(data, m=2):
-    return data[abs(data - np.mean(data)) < m * np.std(data)]
+import matplotlib
 
 
 if __name__ == '__main__':
-    data = np.loadtxt('WinsrSELQRChol.txt')
+    matplotlib.rcParams['pdf.fonttype'] = 42
+    matplotlib.rcParams['ps.fonttype'] = 42
+
+    data = np.loadtxt('Results4.txt')
 
     # print data.shape
     # data = [data[m] for d, m in zip(data.T, mask.T)]
@@ -31,20 +31,19 @@ if __name__ == '__main__':
 
     f, (ax1, ax2) = plt.subplots(1, 2, sharex=False, sharey=False)
 
-    bp = ax1.boxplot(cost, 0, '')
-    ax1.set_xticklabels(['SELQR', 'QRSELQR'])
-    ax1.set_ylabel("Cost")
+    bp = ax1.boxplot(cost, showmeans=True, showfliers=False)
+    ax1.set_xticklabels(['E-LQR', 'RE-LQR'])
+    ax1.set_title("Cost")
+    ax1.grid()
 
-    ax2.boxplot(times, 0, '')
-    ax2.set_xticklabels(['SELQR', 'QRSELQR'])
-    ax2.set_ylabel("Time (ms)")
+    ax2.boxplot(times, showmeans=True, showfliers=False)
+    ax2.set_xticklabels(['E-LQR', 'RE-LQR'])
+    ax2.set_title("Time (ms)")
+    ax2.grid()
+
 
     print 'Mean iters: ', np.mean(data[:, 4]), np.mean(data[:, 5])
     print 'Mean costs: ', np.mean(costSELQR), np.mean(costRSELQR)
     print 'Mean time: ', np.mean(data[:, 0]), np.mean(data[:, 1])
-
-    print 'Std iters: ', np.std(data[:, 4]), np.std(data[:, 5])
-    print 'Std costs: ', np.std(costSELQR), np.std(costRSELQR)
-    print 'Std time: ', np.std(data[:, 0]), np.std(data[:, 1])
 
     plt.show()

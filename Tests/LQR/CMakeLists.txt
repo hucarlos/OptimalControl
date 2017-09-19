@@ -14,7 +14,9 @@ find_package(yaml-cpp)
 link_directories(/usr/local/lib)
 
 set(YAMLCPP_LIBRARY yaml-cpp)
-set(INTEL_LIBRARY /opt/intel/mkl/lib/intel64/libmkl_rt.so)
+
+find_package(MKL)
+
 
 
 add_executable(SELQR SELQR.cpp)
@@ -30,4 +32,16 @@ add_executable(QRSELQR_samplings QRSELQR_samplings.cpp)
 target_link_libraries(QRSELQR_samplings ${ARMADILLO_LIBRARIES} ${YAMLCPP_LIBRARY} ${INTEL_LIBRARY} tbb)
 
 add_executable(Quadroptor_simple Quadroptor_simple.cpp)
-target_link_libraries(Quadroptor_simple ${ARMADILLO_LIBRARIES} ${YAMLCPP_LIBRARY} ${INTEL_LIBRARY} tbb)
+
+add_executable(Quadroptor Quadrotor.cpp)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
+
+if(MKL_FOUND)
+    include_directories(${MKL_INCLUDE_DIRS})
+    target_link_libraries(Quadroptor_simple ${ARMADILLO_LIBRARIES} ${YAMLCPP_LIBRARY} ${MKL_LIBRARIES} pthread  tbb)
+    target_link_libraries(Quadroptor ${ARMADILLO_LIBRARIES} ${YAMLCPP_LIBRARY} ${MKL_LIBRARIES} pthread  tbb)
+else()
+    target_link_libraries(Quadroptor_simple ${ARMADILLO_LIBRARIES} ${YAMLCPP_LIBRARY} tbb)
+    target_link_libraries(Quadroptor ${ARMADILLO_LIBRARIES} ${YAMLCPP_LIBRARY} tbb)
+endif()

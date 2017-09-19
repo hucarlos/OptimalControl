@@ -144,11 +144,11 @@ int main(int argc, char *argv[])
         try
         {
             ExtenedState initRadius;
-            initRadius.subvec(0, 2)     = 1.0e-3  * ones<vec>(3);
-            initRadius.subvec(3, 5)     = 1.0e-3 * ones<vec>(3);
-            initRadius.subvec(6, 8)     = 1.0e-5  * ones<vec>(3);
-            initRadius.subvec(9, 11)    = 1.0e-3  * ones<vec>(3);
-            initRadius.subvec(12, 15)   = 1.0e-3  * ones<vec>(4);
+            initRadius.subvec(0, 2)     = 1.0e-1  * ones<vec>(3);
+            initRadius.subvec(3, 5)     = 1.0e-1 * ones<vec>(3);
+            initRadius.subvec(6, 8)     = 1.0e-1  * ones<vec>(3);
+            initRadius.subvec(9, 11)    = 1.0e-1  * ones<vec>(3);
+            initRadius.subvec(12, 15)   = 1.0e-1  * ones<vec>(4);
 
             double epsilon      = 1.0e-2;
 
